@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 interface ICtx {
   oidc: {
     uid: string;
@@ -7,7 +10,7 @@ interface ICtx {
 // const {
 //   interactionPolicy: { Prompt, base: policy },
 // } = require("../../lib"); // require('oidc-provider');
-import { interactionPolicy } from "oidc-provider";
+import { Configuration, interactionPolicy } from "oidc-provider";
 
 // copies the default policy, already has login and consent prompt policies
 const interactions = interactionPolicy.base(); // policy();
@@ -21,7 +24,7 @@ const selectAccount = new interactionPolicy.Prompt({
 // add to index 0, order goes select_account > login > consent
 interactions.add(selectAccount, 0);
 
-export default {
+export const configuration: Configuration = {
   clients: [
     // {
     //   client_id: 'oidcCLIENT',
@@ -113,3 +116,6 @@ export default {
     RefreshToken: 1 * 24 * 60 * 60, // 1 day in seconds
   },
 };
+
+export const MONGODB_URI = process.env.DATABASE_URI;
+export const NODE_ENV = process.env.NODE_ENV;

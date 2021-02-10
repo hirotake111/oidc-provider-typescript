@@ -1,3 +1,5 @@
+import { FindAccount } from "oidc-provider";
+
 const store = new Map<string, Account>();
 const logins = new Map<string, Account>();
 

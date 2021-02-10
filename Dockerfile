@@ -11,9 +11,6 @@ RUN npm install --also=dev
 COPY src ./src
 RUN npm run build
 
-#
-# Final stage
-#
 FROM node:14.12.0-stretch-slim
 WORKDIR /app
 # Add user

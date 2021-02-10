@@ -3,33 +3,94 @@ import url from "url";
 
 import express from "express";
 import helmet from "helmet";
+import set from "lodash/set";
 import { Provider } from "oidc-provider";
 
 import Account from "./support/account";
-import configration from "./support/configuration";
-import configuration from "./support/configuration";
+import { configuration, MONGODB_URI, NODE_ENV } from "./support/configuration";
+import { Server } from "http";
+import { MongoAdapter } from "./adapters/mongodb";
+import { useRoute } from "./router";
 
 const PORT = process.env.PORT || 3000; // Port number
+const ISSUER = `http://localhost:${PORT}`;
 
 const app = express();
 
+// Proxy setting
+// Set the following if this app has web server in front of itself
+app.set("trust proxy", true);
 // Use body-parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // helmet
 app.use(helmet());
-
 // View settings
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-// let server;
-// async () => {
-//   let adapter;
-//   if (process.env.MONGODB_URI) {
-//   }
-// };
+// console.log(configuration.dbConfig.databaseURI);
+let server: Server;
+(async () => {
+  // If Mongo DB URI is set, use mongodb adapter
+  if (MONGODB_URI) {
+    await MongoAdapter.connect(MONGODB_URI);
+  }
 
-app.get("/", (req, res) => res.json({ msg: "express + typescript" }));
+  if (NODE_ENV === "production") {
+    set(configuration, "cookies.short.secure", true);
+    set(configuration, "cookies.long.secure", true);
+  }
 
-app.listen(PORT, () => console.log(`Listening on port ${PORT}...`));
+  // Create a new provider
+  const provider = new Provider(ISSUER, {
+    adapter: MongoAdapter,
+    ...configuration,
+  });
+
+  if (NODE_ENV === "production") {
+    // Set the following if this app has web server in front of itself
+    app.enable("trust proxy");
+    provider.proxy = true;
+
+    app.use((req, res, next) => {
+      // Below is a shorthand for req.protocol == 'https'
+      // meaning if it's http, redirect to https
+      if (req.secure) {
+        next();
+      } else if (req.method === "GET" || req.method === "HEAD") {
+        res.redirect(
+          url.format({
+            protocol: "https",
+            host: req.get("host"),
+            pathname: req.originalUrl,
+          })
+        );
+      } else {
+        res.status(400).json({
+          error: "invalid_request",
+          error_description: "do yourself a favor and only use https",
+        });
+      }
+    });
+  }
+
+  // Append routes for /interaction
+  useRoute(app, provider);
+  // leave the rest of the requests to be handled by oidc-provider, there's a catch all 404 there
+  app.use(provider.callback);
+
+  server = app.listen(PORT, () => {
+    console.log(
+      `application is listening on port ${PORT}, check its /.well-known/openid-configuration`
+    );
+  });
+})().catch((err) => {
+  if (server && server.listening) server.close();
+  console.error(err);
+  process.exitCode = 1;
+});
+
+// app.get("/", (req, res) => res.json({ msg: "express + typescript" }));
+
+// app.listen(PORT, () => console.log(`Listening on port ${PORT}...`));
