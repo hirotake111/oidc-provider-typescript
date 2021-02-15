@@ -6,10 +6,8 @@ import helmet from "helmet";
 import set from "lodash/set";
 import { Provider } from "oidc-provider";
 
-import Account from "./support/account";
-import { configuration, MONGODB_URI, NODE_ENV } from "./support/configuration";
+import { configuration, NODE_ENV } from "./support/configuration";
 import { Server } from "http";
-import { MongoAdapter } from "./adapters/mongodb";
 import { useRoute } from "./router";
 
 const PORT = process.env.PORT || 3000; // Port number
@@ -29,32 +27,28 @@ app.use(helmet());
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-// console.log(configuration.dbConfig.databaseURI);
 let server: Server;
 (async () => {
-  // If Mongo DB URI is set, use mongodb adapter
-  if (MONGODB_URI) {
-    await MongoAdapter.connect(MONGODB_URI);
-  }
+  const is_prodction = NODE_ENV === "production";
 
-  if (NODE_ENV === "production") {
+  if (is_prodction) {
     set(configuration, "cookies.short.secure", true);
     set(configuration, "cookies.long.secure", true);
   }
 
   // Create a new provider
   const provider = new Provider(ISSUER, {
-    adapter: MongoAdapter,
+    adapter: undefined, // use default in-memory adapter
     ...configuration,
   });
 
-  if (NODE_ENV === "production") {
+  if (is_prodction) {
     // Set the following if this app has web server in front of itself
     app.enable("trust proxy");
     provider.proxy = true;
 
     app.use((req, res, next) => {
-      // Below is a shorthand for req.protocol == 'https'
+      // Below is a shorthand for req.protocol === 'https'
       // meaning if it's http, redirect to https
       if (req.secure) {
         next();
@@ -77,13 +71,11 @@ let server: Server;
 
   // Append routes for /interaction
   useRoute(app, provider);
-  // leave the rest of the requests to be handled by oidc-provider, there's a catch all 404 there
+  // 404 for the rest of the requests
   app.use(provider.callback);
 
   server = app.listen(PORT, () => {
-    console.log(
-      `application is listening on port ${PORT}, check its /.well-known/openid-configuration`
-    );
+    console.log(`CHECK OUT ${ISSUER}/.well-known/openid-configuration`);
   });
 })().catch((err) => {
   if (server && server.listening) server.close();

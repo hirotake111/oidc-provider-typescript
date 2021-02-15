@@ -26,12 +26,12 @@ interactions.add(selectAccount, 0);
 
 export const configuration: Configuration = {
   clients: [
-    // {
-    //   client_id: 'oidcCLIENT',
-    //   client_secret: '...',
-    //   grant_types: ['refresh_token', 'authorization_code'],
-    //   redirect_uris: ['http://sso-client.dev/providers/7/open_id', 'http://sso-client.dev/providers/8/open_id'],
-    // }
+    {
+      client_id: "myclient",
+      client_secret: "secret",
+      grant_types: ["refresh_token", "authorization_code"],
+      redirect_uris: ["http://localhost:3001/callback"],
+    },
   ],
   interactions: {
     policy: interactions,

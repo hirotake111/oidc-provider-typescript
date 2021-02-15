@@ -1,4 +1,11 @@
-import { FindAccount } from "oidc-provider";
+import {
+  FindAccount,
+  Account as IAccount,
+  KoaContextWithOIDC,
+  ClaimsParameterMember,
+  CanBePromise,
+  AccountClaims,
+} from "oidc-provider";
 
 const store = new Map<string, Account>();
 const logins = new Map<string, Account>();
@@ -20,17 +27,28 @@ interface IClaim extends IProfile {
   sub: string;
 }
 
+type IClaims = (use: any, scope: any) => Promise<any>;
+
+/**
+ * Account class only has static methods
+ * - findAccount (required)
+ * - authenticate (optional)
+ */
 class Account {
   accountId: string;
   profile?: IProfile;
 
-  constructor(id: string, profile?: IProfile) {
+  constructor(id?: string, profile?: IProfile) {
     this.accountId = id || nanoid();
     this.profile = profile;
     store.set(this.accountId, this);
   }
 
-  async claims(use: IUse, scope: string[]): Promise<IClaim> {
+  async claims(
+    use: string,
+    scope: string,
+    claims: { [key: string]: null | ClaimsParameterMember }
+  ): Promise<AccountClaims> {
     if (this.profile) {
       return {
         sub: this.accountId, // It is essential to always return a sub claim
@@ -47,21 +65,7 @@ class Account {
     };
   }
 
-  static async findByFederated(
-    provider: string,
-    claims: IClaim
-  ): Promise<Account> {
-    const id = `${provider}.${claims.sub}`;
-    let account = logins.get(id);
-    // If ID does not exist, register it
-    if (!account) {
-      account = new Account(id, claims);
-      logins.set(id, account);
-    }
-    return account;
-  }
-
-  static async findByLogin(login: string): Promise<Account> {
+  static async authenticate(login: string) {
     let account = logins.get(login);
     // If ID does not exist, register it
     if (!account) {
@@ -74,18 +78,45 @@ class Account {
 
   /**
    *
-   * @param id string
+   * findAccount(id: string, token: string):
+   * oidc-provider needs to be able to find an account and once found
+   *  the account needs to have an accountId property as well as claims() function
+   * returning an object with claims that correspond to the claims your issuer supports.
+   * Tell oidc-provider how to find your account by an ID. #claims() can also
+   * return a Promise later resolved / rejected.
+   *
+   * @param ctx KoaContextWithOIDC
+   * @param sub string
    * @param token string
    * retrieve account from store and returns it
    */
-  static async findAccount(id: string, token: string): Promise<Account> {
-    let account = store.get(id);
-    if (!account) {
-      account = new Account(id);
-      store.set(id, account);
+  static findAccount: FindAccount = function (ctx, sub, token) {
+    // Fetch user by id
+    const user = store.get(sub);
+    if (!user) {
+      // User doesnt exist
+      return undefined;
     }
-    return account;
-  }
+
+    return {
+      accountId: sub,
+      async claims(
+        use: string,
+        scope: string,
+        claims: { [key: string]: null | ClaimsParameterMember }
+      ): Promise<AccountClaims> {
+        return {
+          sub, // It is essential to always return a sub claim
+          email: user.profile?.email,
+          email_verified: user.profile?.email_verified,
+          family_name: user.profile?.family_name,
+          given_name: user.profile?.given_name,
+          locale: user.profile?.locale,
+          name: user.profile?.name,
+        };
+      },
+    };
+  };
 }
 
 export default Account;

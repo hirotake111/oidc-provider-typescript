@@ -14,6 +14,7 @@ services:
       - 3000:3000
     environment:
       DATABASE_URI: mongodb://db:27017
+      DEBUG: oidc-provider:*
     #   ME_CONFIG_MONGODB_ADMINUSERNAME: root
     #   ME_CONFIG_MONGODB_ADMINPASSWORD: example
   db: # PostgreSQL
