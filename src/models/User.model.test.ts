@@ -1,8 +1,11 @@
 import { nanoid } from "nanoid";
+import { v4 as uuid } from "uuid";
 import { Sequelize } from "sequelize-typescript";
 import bcrypt from "bcrypt";
+import { KoaContextWithOIDC } from "oidc-provider";
 
 import { User, IcreateUserProps } from "./User.model";
+import { isUUIDv4 } from "../support/util";
 
 class UserClass {
   public id?: string;
@@ -20,7 +23,7 @@ class UserClass {
     firstName: string,
     lastName: string
   ) {
-    this.id = nanoid();
+    this.id = uuid();
     this.username = username;
     this.password = nanoid();
     this.displayName = displayName;
@@ -222,6 +225,28 @@ describe("Test User model", () => {
       );
     } catch (error) {
       console.error(error);
+    }
+  });
+
+  test(".findAccount() should return Promise<Account | undefined>", async () => {
+    try {
+      expect.assertions(2);
+      // add a new user to database
+      const alice = createAlice();
+      await addUsersToDB(alice);
+      // find account
+      if (!alice.id) {
+        throw new Error("user not found!");
+      }
+      const context: KoaContextWithOIDC = {} as KoaContextWithOIDC;
+      const account = await User.findAccount(context, alice.id, "token");
+
+      // account should have accountId typed uuid v4
+      expect(isUUIDv4(account?.accountId)).toBe(true);
+      // account should have function claims
+      expect(typeof account?.claims === "function").toBe(true);
+    } catch (error) {
+      console.error("error: ", error);
     }
   });
 });
