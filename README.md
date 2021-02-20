@@ -4,7 +4,7 @@
 
 ```bash
 # Image for development
-docker build -t $IMAGE -f Dockerfile-dev .
+docker build -t nodeapp-dev -f Dockerfile-dev .
 # Image for production
 docker build -t $IMAGE .
 ```

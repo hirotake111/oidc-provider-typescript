@@ -69,7 +69,7 @@ describe("Test User model", () => {
     try {
       sequelize = new Sequelize({
         dialect: "sqlite",
-        database: "movies",
+        database: "users",
         storage: ":memory:",
         // models: [__dirname + "/**/*.model.ts"], // needs to be default export
         models: [User],
@@ -176,28 +176,32 @@ describe("Test User model", () => {
     expect(User.createUser(user)).rejects.toThrow();
   });
 
-  test(".authenticate() should return true if authenticated", async () => {
+  test(".authenticate() should return id if authenticated", async () => {
     expect.assertions(1);
     // create a new user
     const alice = createAlice();
     await addUsersToDB(alice);
-    if (alice.username && alice.password) {
-      expect(
-        await User.authenticate(alice.username, alice.password)
-      ).toBeTruthy();
+    if (alice.username && alice.password && alice.id) {
+      expect(await User.authenticate(alice.username, alice.password)).toEqual(
+        alice.id
+      );
     }
   });
 
-  test(".authenticate() should return false if credentials is invald", async () => {
-    expect.assertions(2);
-    // create a new user
-    const alice = createAlice();
-    await addUsersToDB(alice);
-    if (alice.username && alice.password) {
-      // password is incorrect
-      expect(await User.authenticate(alice.username, "aaaa")).toBeFalsy();
-      // username is incorrect
-      expect(await User.authenticate("other user", alice.username)).toBeFalsy();
+  test(".authenticate() should return null if credentials is invald", async () => {
+    try {
+      expect.assertions(2);
+      // create a new user
+      const alice = createAlice();
+      await addUsersToDB(alice);
+      if (alice.username && alice.password) {
+        // password is incorrect
+        expect(await User.authenticate(alice.username, "aaaa")).toBe(null);
+        // username is incorrect
+        expect(await User.authenticate("other", alice.username)).toBe(null);
+      }
+    } catch (error) {
+      console.error("error: ", error);
     }
   });
 

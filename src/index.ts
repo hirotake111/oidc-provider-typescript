@@ -6,10 +6,14 @@ import helmet from "helmet";
 import set from "lodash/set";
 import { Provider } from "oidc-provider";
 
-import { configuration, NODE_ENV } from "./support/configuration";
+import { configuration, NODE_ENV, DATABASE_URI } from "./support/configuration";
 import { Server } from "http";
 import { useRoute } from "./router";
+import { Sequelize } from "sequelize-typescript";
+import assert from "assert";
+import { User } from "./models/User.model";
 
+assert(typeof DATABASE_URI === "string", "Connection string for DB is empty");
 const PORT = process.env.PORT || 3000; // Port number
 const ISSUER = `http://localhost:${PORT}`;
 
@@ -29,9 +33,15 @@ app.set("view engine", "ejs");
 
 let server: Server;
 (async () => {
-  const is_prodction = NODE_ENV === "production";
+  const isProduction = NODE_ENV === "production";
 
-  if (is_prodction) {
+  // connect to database
+  const sequelize = new Sequelize(DATABASE_URI, { models: [User] });
+  await sequelize.authenticate();
+  // create databaase if not exists
+  await sequelize.sync();
+
+  if (isProduction) {
     set(configuration, "cookies.short.secure", true);
     set(configuration, "cookies.long.secure", true);
   }
@@ -40,10 +50,11 @@ let server: Server;
   const provider = new Provider(ISSUER, {
     adapter: undefined, // use default in-memory adapter
     ...configuration,
+    findAccount: User.findAccount,
   });
 
-  if (is_prodction) {
-    // Set the following if this app has web server in front of itself
+  if (isProduction) {
+    // Set the following setting if this app has web server in front of itself
     app.enable("trust proxy");
     provider.proxy = true;
 
@@ -76,6 +87,7 @@ let server: Server;
 
   server = app.listen(PORT, () => {
     console.log(`CHECK OUT ${ISSUER}/.well-known/openid-configuration`);
+    if (!isProduction) console.log("http://localhost:3001");
   });
 })().catch((err) => {
   if (server && server.listening) server.close();

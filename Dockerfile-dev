@@ -1,4 +1,4 @@
-FROM node:14.12.0-stretch-slim
+FROM node:14.12.0
 
 WORKDIR /app
 COPY *.json ./

@@ -1,5 +1,6 @@
 import { Express, Request, Response } from "express";
 import { Provider } from "oidc-provider";
+import { User } from "./models/User.model";
 
 async function notFound(req: Request, res: Response) {
   res.status(404).send("NOT FOUND.");
@@ -56,9 +57,31 @@ export function useRoute(app: Express, provider: Provider): void {
 
   app.post("/interaction/:uid/login", async (req, res) => {
     // redirect to client/callback
-    const details = await provider.interactionDetails(req, res);
-    console.log("details: ", details);
-    res.send("login page");
+    try {
+      const details = await provider.interactionDetails(req, res);
+      const { prompt, params, uid, session } = details;
+      const client = await provider.Client.find(params.client_id);
+      console.log("details: ", details);
+      if (await User.authenticate(req.body.username, req.body.password)) {
+        return res.send("authenticated");
+      }
+      // invalid usrname or password -> back to login page
+      return res.render("login", {
+        client,
+        uid,
+        params,
+        details: prompt.details,
+        title: "Sign-in",
+        session: session ? session : undefined,
+        dbg: { params, prompt },
+        flash: "invalid username or password",
+      });
+      // res.send("login page");
+    } catch (error) {
+      return res.render("index", {
+        flash: error,
+      });
+    }
   });
 
   app.get("/interaction/:uid/abort", async (req, res) => {

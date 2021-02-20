@@ -82,13 +82,22 @@ export class User extends Model {
   public static authenticate(
     username: string,
     password: string
-  ): Promise<boolean> {
+  ): Promise<string | null> {
+    let user: User | null;
     return new Promise((resolve, reject) => {
       // fetch user from database
       User.findOne({ where: { username } })
-        .then((user) => bcrypt.compare(password, user!.password))
-        .then((result) => resolve(result))
-        .catch((_) => resolve(false));
+        .then((_user) => {
+          if (!_user) {
+            // user does not exist
+            resolve(null);
+            return;
+          }
+          user = _user;
+          return bcrypt.compare(password, _user.password);
+        })
+        .then((result) => resolve(result && user ? user.id : null))
+        .catch((_) => resolve(null));
     });
   }
 
@@ -99,8 +108,9 @@ export class User extends Model {
   public static async findAccount(
     ctx: KoaContextWithOIDC,
     sub: string,
-    token: string
+    token?: any
   ): Promise<Account | undefined> {
+    console.log(".findAccount()");
     console.log("ctx: ", ctx);
     // fetch user by id and return undefined if not mached
     const account = await User.findOne({ where: { id: sub } });

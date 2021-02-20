@@ -13,13 +13,16 @@ services:
     ports:
       - 3000:3000
     environment:
-      DATABASE_URI: mongodb://db:27017
-      DEBUG: oidc-provider:*
+      - "DEBUG=oidc-provider:*"
+      - "DATABASE_URI=postgres://user:password@localhost:5432/mydatabase"
+      - "NODE_ENV=development"
     #   ME_CONFIG_MONGODB_ADMINUSERNAME: root
     #   ME_CONFIG_MONGODB_ADMINPASSWORD: example
   db: # PostgreSQL
-    image: mongo:4.4.3
-    restart: always
-    # environment:
-    #   MONGO_INITDB_ROOT_USERNAME: root
-    #   MONGO_INITDB_ROOT_PASSWORD: example
+    image: postgres:13.2
+    environment:
+      - "POSTGRES_USER=user"
+      - "POSTGRES_PASSWORD=password"
+      - "POSTGRES_DB=mydatabase"
+    ports:
+      - "5432:5432"

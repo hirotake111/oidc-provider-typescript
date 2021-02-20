@@ -90,7 +90,7 @@ class Account {
    * @param token string
    * retrieve account from store and returns it
    */
-  static findAccount: FindAccount = function (ctx, sub, token) {
+  static findAccount(ctx: KoaContextWithOIDC, sub: string, token?: any) {
     // Fetch user by id
     const user = store.get(sub);
     if (!user) {
@@ -106,7 +106,7 @@ class Account {
         claims: { [key: string]: null | ClaimsParameterMember }
       ): Promise<AccountClaims> {
         return {
-          sub, // It is essential to always return a sub claim
+          sub,
           email: user.profile?.email,
           email_verified: user.profile?.email_verified,
           family_name: user.profile?.family_name,
@@ -116,7 +116,7 @@ class Account {
         };
       },
     };
-  };
+  }
 }
 
 export default Account;
