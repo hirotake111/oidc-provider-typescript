@@ -117,6 +117,3 @@ export const configuration: Configuration = {
     RefreshToken: 1 * 24 * 60 * 60, // 1 day in seconds
   },
 };
-
-export const DATABASE_URI = process.env.DATABASE_URI;
-export const NODE_ENV = process.env.NODE_ENV;

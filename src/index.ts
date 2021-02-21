@@ -1,21 +1,26 @@
 import path from "path";
 import url from "url";
+import assert from "assert";
 
 import express from "express";
 import helmet from "helmet";
 import set from "lodash/set";
 import { Provider } from "oidc-provider";
+import { Sequelize } from "sequelize-typescript";
 
-import { configuration, NODE_ENV, DATABASE_URI } from "./support/configuration";
+import { configuration } from "./support/configuration";
 import { Server } from "http";
 import { useRoute } from "./router";
-import { Sequelize } from "sequelize-typescript";
-import assert from "assert";
 import { User } from "./models/User.model";
+import { dbFactory } from "./support/dbFactory";
 
+const DATABASE_URI = process.env.DATABASE_URI;
+const ISSUER = process.env.ISSUER;
 assert(typeof DATABASE_URI === "string", "Connection string for DB is empty");
+assert(typeof ISSUER === "string", "You need to set ISSUER env vairable");
+
 const PORT = process.env.PORT || 3000; // Port number
-const ISSUER = `http://localhost:${PORT}`;
+const isProduction = process.env.NODE_ENV === "production";
 
 const app = express();
 
@@ -33,13 +38,27 @@ app.set("view engine", "ejs");
 
 let server: Server;
 (async () => {
-  const isProduction = NODE_ENV === "production";
+  // // // connect to database
+  // const sequelize = new Sequelize(DATABASE_URI, {
+  //   models: [User],
+  //   logging: false,
+  // });
+  // await sequelize.authenticate();
+  // // create databaase if not exists
+  // await sequelize.sync();
 
   // connect to database
-  const sequelize = new Sequelize(DATABASE_URI, { models: [User] });
-  await sequelize.authenticate();
-  // create databaase if not exists
-  await sequelize.sync();
+  const sequelize = await dbFactory(DATABASE_URI, [User], { logging: false });
+
+  // add test user
+  if (!isProduction) {
+    await User.destroy({ where: { username: "test" } });
+    await User.createUser({
+      username: "test",
+      password: "test",
+      displayName: "test",
+    });
+  }
 
   if (isProduction) {
     set(configuration, "cookies.short.secure", true);

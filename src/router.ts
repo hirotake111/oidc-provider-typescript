@@ -1,10 +1,19 @@
-import { Express, Request, Response } from "express";
-import { Provider } from "oidc-provider";
+import { Express, NextFunction, Request, Response } from "express";
+import { urlencoded } from "express";
+import { InteractionResults, Provider } from "oidc-provider";
 import { User } from "./models/User.model";
 
 async function notFound(req: Request, res: Response) {
   res.status(404).send("NOT FOUND.");
 }
+
+function setNoCache(req: Request, res: Response, next: NextFunction) {
+  res.set("Pragma", "no-cache");
+  res.set("Cache-Control", "no-cache, no-store");
+  next();
+}
+
+const parse = urlencoded({ extended: false });
 
 export function useRoute(app: Express, provider: Provider): void {
   app.get("/interaction/:uid", async (req, res, next) => {
@@ -34,6 +43,7 @@ export function useRoute(app: Express, provider: Provider): void {
 
         case "consent": {
           // consent prompt
+          console.log("prompt.name is consent!!!!!");
           return res.render("interaction", {
             client,
             uid,
@@ -47,7 +57,8 @@ export function useRoute(app: Express, provider: Provider): void {
         }
 
         default:
-          return notFound(req, res);
+          notFound(req, res);
+          return;
       }
     } catch (err) {
       console.log("error!!!");
@@ -55,18 +66,49 @@ export function useRoute(app: Express, provider: Provider): void {
     }
   });
 
-  app.post("/interaction/:uid/login", async (req, res) => {
+  app.post("/interaction/:uid/login", async (req, res, next) => {
     // redirect to client/callback
     try {
       const details = await provider.interactionDetails(req, res);
+      // console.log("details: ", details);
       const { prompt, params, uid, session } = details;
       const client = await provider.Client.find(params.client_id);
-      console.log("details: ", details);
-      if (await User.authenticate(req.body.username, req.body.password)) {
-        return res.send("authenticated");
+      const { username, password } = req.body;
+
+      //
+      if (
+        !username ||
+        !password ||
+        typeof username !== "string" ||
+        typeof password !== "string"
+      ) {
+        params.login_hint = username;
+        // invalid usrname or password -> back to login page
+        res.render("login", {
+          client,
+          uid,
+          params,
+          details: prompt.details,
+          title: "Sign-in",
+          session: session ? session : undefined,
+          dbg: { params, prompt },
+          flash: "invalid username or password",
+        });
+        return;
+      }
+      const accountId = await User.authenticate(username, password);
+      console.log("accountId: ", accountId);
+      if (accountId) {
+        // successfully signed in -> finish interaction
+        const result: InteractionResults = { login: { account: accountId } };
+        await provider.interactionFinished(req, res, result, {
+          mergeWithLastSubmission: false,
+        });
+        return;
       }
       // invalid usrname or password -> back to login page
-      return res.render("login", {
+      params.login_hint = username;
+      res.render("login", {
         client,
         uid,
         params,
@@ -76,23 +118,45 @@ export function useRoute(app: Express, provider: Provider): void {
         dbg: { params, prompt },
         flash: "invalid username or password",
       });
-      // res.send("login page");
+      return;
     } catch (error) {
-      return res.render("index", {
-        flash: error,
-      });
+      notFound(req, res);
+      return;
     }
   });
 
   app.get("/interaction/:uid/abort", async (req, res) => {
-    // redirect to client/callback
-    const { params } = await provider.interactionDetails(req, res);
-    const redirectUri = params?.redirect_uri;
-    if (redirectUri) {
-      return res.redirect(params.redirect_uri);
-    }
+    try {
+      // redirect to client/callback
+      const { params } = await provider.interactionDetails(req, res);
+      const redirectUri = params?.redirect_uri;
+      if (redirectUri) {
+        res.redirect(params.redirect_uri);
+        return;
+      }
 
-    return notFound(req, res);
+      notFound(req, res);
+      return;
+    } catch (e) {
+      notFound(req, res);
+      return;
+    }
+  });
+
+  app.post("/interaction/:uid/confirm", setNoCache, parse, async (req, res) => {
+    try {
+      const result = {
+        consent: {
+          // rejectedScopes: [], // < uncomment and add rejections here
+          // rejectedClaims: [], // < uncomment and add rejections here
+        },
+      };
+      await provider.interactionFinished(req, res, result, {
+        mergeWithLastSubmission: true,
+      });
+    } catch (err) {
+      notFound(req, res);
+    }
   });
 
   // app.use((req, res) => res.status(404).send("NOT FOUND."));
