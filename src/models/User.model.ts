@@ -17,6 +17,7 @@ import {
   Account,
   ClaimsParameterMember,
 } from "oidc-provider";
+import { where } from "sequelize/types";
 
 export interface IcreateUserProps {
   username: string;
@@ -62,43 +63,49 @@ export class User extends Model {
   @DeletedAt
   deletedAt?: Date;
 
-  public static createUser(props: IcreateUserProps): Promise<User> {
-    return new Promise((resolve, reject) => {
+  public static async createUser(props: IcreateUserProps): Promise<User> {
+    try {
       const id = uuid();
       const createdAt = new Date();
       const updatedAt = createdAt;
-      if (props.password.length > 20) throw new Error("password is too long");
-      // Generate password
-      bcrypt
-        .genSalt(5)
-        .then((salt) => bcrypt.hash(props.password, salt))
-        .then((hashed) =>
-          this.create({ id, ...props, password: hashed, createdAt, updatedAt })
-        )
-        .then((user) => resolve(user));
-    });
+      // if password is too long - raise an error
+      if (props.password.length > 20) {
+        throw new Error("password is too long");
+      }
+
+      // if user already exists - raise an error
+      if (await User.findOne({ where: { username: props.username } })) {
+        throw new Error("user already exists");
+      }
+
+      const password = await bcrypt.hash(props.password, 5);
+      const newUser = await User.create({
+        ...props,
+        id,
+        password,
+        createdAt,
+        updatedAt,
+      });
+      return newUser;
+    } catch (e) {
+      throw e;
+    }
   }
 
-  public static authenticate(
+  public static async authenticate(
     username: string,
     password: string
   ): Promise<string | null> {
-    let user: User | null;
-    return new Promise((resolve, reject) => {
+    try {
       // fetch user from database
-      User.findOne({ where: { username } })
-        .then((_user) => {
-          if (!_user) {
-            // user does not exist
-            resolve(null);
-            return;
-          }
-          user = _user;
-          return bcrypt.compare(password, _user.password);
-        })
-        .then((result) => resolve(result && user ? user.id : null))
-        .catch((_) => resolve(null));
-    });
+      const user = await User.findOne({ where: { username } });
+      if (!user) {
+        return null;
+      }
+      return (await bcrypt.compare(password, user.password)) ? user.id : null;
+    } catch (e) {
+      throw e;
+    }
   }
 
   // @param ctx - koa request context
@@ -110,8 +117,9 @@ export class User extends Model {
     sub: string,
     token?: any
   ): Promise<Account | undefined> {
-    console.log(".findAccount()");
-    console.log("ctx: ", ctx);
+    // console.log(".findAccount()");
+    // console.log("ctx: ", ctx);
+
     // fetch user by id and return undefined if not mached
     const account = await User.findOne({ where: { id: sub } });
     if (!account) return undefined;

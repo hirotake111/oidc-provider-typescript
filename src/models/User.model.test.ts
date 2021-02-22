@@ -159,13 +159,13 @@ describe("Test User model", () => {
       expect(fetched.username).toEqual(user.username);
       expect(fetched.id).toHaveLength(36);
       // check if the password is different as given one.
-      expect(fetched.password === user.password).toBeFalsy();
+      expect(fetched.password === user.password).toBe(false);
     } catch (e) {
       console.error(e);
     }
   });
 
-  test(".createUser() should raise an error if password is too long", () => {
+  test(".createUser() should raise an error if password is too long", async () => {
     expect.assertions(1);
     // create a new user using .create() method
     const user: IcreateUserProps = {
@@ -173,7 +173,30 @@ describe("Test User model", () => {
       password: "abcdabcdabcdabcdabcdabcdabcdabcd",
       displayName: "Adele Vance",
     };
-    expect(User.createUser(user)).rejects.toThrow();
+    try {
+      await User.createUser(user);
+    } catch (e) {
+      expect(e.message).toEqual("password is too long");
+    }
+  });
+
+  test(".createUser() should raise an error if username already exists", async () => {
+    expect.assertions(1);
+    try {
+      // add a new user to database
+      const alice = createAlice();
+      if (!alice.username) throw new Error("test error - username is null");
+      await addUsersToDB(alice);
+      // create a new user using .create() method
+      const user: IcreateUserProps = {
+        username: alice.username,
+        password: "pasword123",
+        displayName: "Adele Vance",
+      };
+      await User.createUser(user);
+    } catch (e) {
+      expect(e.message).toEqual("user already exists");
+    }
   });
 
   test(".authenticate() should return id if authenticated", async () => {
@@ -194,14 +217,15 @@ describe("Test User model", () => {
       // create a new user
       const alice = createAlice();
       await addUsersToDB(alice);
-      if (alice.username && alice.password) {
-        // password is incorrect
-        expect(await User.authenticate(alice.username, "aaaa")).toBe(null);
-        // username is incorrect
-        expect(await User.authenticate("other", alice.username)).toBe(null);
+      if (!(alice.username && alice.password)) {
+        return;
       }
+      // password is incorrect
+      expect(await User.authenticate(alice.username, "aaaa")).toBe(null);
+      // username is incorrect
+      expect(await User.authenticate("other", alice.password)).toBe(null);
     } catch (error) {
-      console.error("error: ", error);
+      console.error("error: ", error.message);
     }
   });
 
@@ -229,6 +253,15 @@ describe("Test User model", () => {
       );
     } catch (error) {
       console.error(error);
+    }
+  });
+
+  test(".destroy() should return 0 if user did not exists", async () => {
+    expect.assertions(1);
+    try {
+      expect(await User.destroy({ where: { username: "abcd" } })).toBe(0);
+    } catch (e) {
+      console.error(e.message);
     }
   });
 
