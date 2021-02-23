@@ -17,7 +17,6 @@ import {
   Account,
   ClaimsParameterMember,
 } from "oidc-provider";
-import { where } from "sequelize/types";
 
 export interface IcreateUserProps {
   username: string;

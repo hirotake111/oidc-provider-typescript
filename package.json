@@ -8,7 +8,7 @@
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "build": "tsc",
     "start": "nodemon index.ts",
-    "test": "jest --watch",
+    "test": "jest --watch $1",
     "serve": "node dist/index.js",
     "client": "node client/index.js"
   },

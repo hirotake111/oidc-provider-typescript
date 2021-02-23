@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { KoaContextWithOIDC } from "oidc-provider";
 
 import { User, IcreateUserProps } from "./User.model";
-import { isUUIDv4 } from "../support/util";
+import { isUUIDv4 } from "../support/utils";
 
 class UserClass {
   public id?: string;
@@ -93,7 +93,7 @@ describe("Test User model", () => {
       where: { username: alice.username },
     });
     // validate it
-    expect(user?.id).toBe(alice.id);
+    expect(user?.id).toEqual(alice.id);
   });
 
   test("User model should raise error if either id, username, displayname, createdAt, or updatedAt is ommited", async () => {
@@ -133,9 +133,9 @@ describe("Test User model", () => {
     // fetch user
     let user: User | null;
     user = await User.findOne({ where: { username: "alice" } });
-    expect(user?.id).toBe(alice.id);
+    expect(user?.id).toEqual(alice.id);
     user = await User.findOne({ where: { username: "bob" } });
-    expect(user?.id).toBe(bob.id);
+    expect(user?.id).toEqual(bob.id);
   });
 
   test(".createUser() should create a new user", async () => {
@@ -159,7 +159,7 @@ describe("Test User model", () => {
       expect(fetched.username).toEqual(user.username);
       expect(fetched.id).toHaveLength(36);
       // check if the password is different as given one.
-      expect(fetched.password === user.password).toBe(false);
+      expect(fetched.password === user.password).toEqual(false);
     } catch (e) {
       console.error(e);
     }
@@ -221,9 +221,9 @@ describe("Test User model", () => {
         return;
       }
       // password is incorrect
-      expect(await User.authenticate(alice.username, "aaaa")).toBe(null);
+      expect(await User.authenticate(alice.username, "aaaa")).toEqual(null);
       // username is incorrect
-      expect(await User.authenticate("other", alice.password)).toBe(null);
+      expect(await User.authenticate("other", alice.password)).toEqual(null);
     } catch (error) {
       console.error("error: ", error.message);
     }
@@ -245,7 +245,7 @@ describe("Test User model", () => {
       });
       // fetch the user
       fetched = await User.findOne({ where: { username: alice.username } });
-      expect(fetched).toBeNull();
+      expect(fetched).toEqual(null);
 
       // .destory() should not raise error even no user matched
       expect(await User.destroy({ where: { username: "otheruser" } })).toEqual(
@@ -259,7 +259,7 @@ describe("Test User model", () => {
   test(".destroy() should return 0 if user did not exists", async () => {
     expect.assertions(1);
     try {
-      expect(await User.destroy({ where: { username: "abcd" } })).toBe(0);
+      expect(await User.destroy({ where: { username: "abcd" } })).toEqual(0);
     } catch (e) {
       console.error(e.message);
     }
@@ -279,9 +279,9 @@ describe("Test User model", () => {
       const account = await User.findAccount(context, alice.id, "token");
 
       // account should have accountId typed uuid v4
-      expect(isUUIDv4(account?.accountId)).toBe(true);
+      expect(isUUIDv4(account?.accountId)).toEqual(true);
       // account should have function claims
-      expect(typeof account?.claims === "function").toBe(true);
+      expect(typeof account?.claims === "function").toEqual(true);
     } catch (error) {
       console.error("error: ", error);
     }

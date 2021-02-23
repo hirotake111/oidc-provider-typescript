@@ -1,131 +1,122 @@
-import { Express, NextFunction, Request, Response } from "express";
+import { Express, Response } from "express";
 import { urlencoded } from "express";
 import { InteractionResults, Provider } from "oidc-provider";
+
 import { User } from "./models/User.model";
-
-async function notFound(req: Request, res: Response) {
-  res.status(404).send("NOT FOUND.");
-}
-
-function setNoCache(req: Request, res: Response, next: NextFunction) {
-  res.set("Pragma", "no-cache");
-  res.set("Cache-Control", "no-cache, no-store");
-  next();
-}
+import { setNoCache } from "./controllers/User.controller";
 
 const parse = urlencoded({ extended: false });
 
-export function useRoute(app: Express, provider: Provider): void {
-  app.get("/interaction/:uid", async (req, res, next) => {
-    // Set no-cache
-    res.set("Pragma", "no-cache");
-    res.set("Cache-Control", "no-cache, no-store");
+interface IRenderProps {
+  view: string;
+  client: any;
+  details: any;
+  title: string;
+  flash?: string;
+}
 
+const renderPage = (res: Response, props: IRenderProps) => {
+  const { view, client, details, title, flash } = props;
+  return res.render(view, {
+    client,
+    uid: details.uid,
+    params: details.params,
+    details: details.prompt.details,
+    flash,
+    title,
+    session: details.session ? details.session : undefined,
+    dbg: { params: details.params, prompt: details.prompt },
+  });
+};
+
+export function useRoute(app: Express, provider: Provider): void {
+  app.get("/interaction/:uid", setNoCache, async (req, res) => {
     try {
       const details = await provider.interactionDetails(req, res);
-      const { prompt, params, uid, session } = details;
+      const client = await provider.Client.find(details.params.client_id);
 
-      const client = await provider.Client.find(params.client_id);
-
-      switch (prompt.name) {
+      switch (details.prompt.name) {
         case "login": {
-          return res.render("login", {
+          return renderPage(res, {
+            view: "login",
             client,
-            uid,
-            params,
-            details: prompt.details,
+            details,
             title: "Sign-in",
-            session: session ? session : undefined,
-            dbg: { params, prompt },
-            flash: undefined,
           });
         }
 
         case "consent": {
-          // consent prompt
-          console.log("prompt.name is consent!!!!!");
-          return res.render("interaction", {
+          return renderPage(res, {
+            view: "interaction",
             client,
-            uid,
-            details: prompt.details,
-            params,
+            details,
             title: "Authorize",
-            session: session ? session : undefined,
-            dbg: { params, prompt },
-            flash: undefined,
           });
         }
 
         default:
-          notFound(req, res);
-          return;
+          return res
+            .status(404)
+            .send(`PROMPT NAME ${details.prompt.name} NOT FOUND`);
       }
-    } catch (err) {
-      console.log("error!!!");
-      return next(err);
+    } catch (e) {
+      console.error("INTERNAL SERVER ERROR: ", e);
+      return res.status(500).send("INTERNAL SERVER ERROR");
     }
   });
 
   app.post("/interaction/:uid/login", async (req, res, next) => {
-    // redirect to client/callback
     try {
+      console.log("post login");
+      // get interaction details and client data
       const details = await provider.interactionDetails(req, res);
-      // console.log("details: ", details);
-      const { prompt, params, uid, session } = details;
-      const client = await provider.Client.find(params.client_id);
+      const client = await provider.Client.find(details.params.client_id);
       const { username, password } = req.body;
 
-      //
+      // validate credentials
       if (
-        !username ||
-        !password ||
         typeof username !== "string" ||
-        typeof password !== "string"
+        typeof password !== "string" ||
+        username.length <= 3 ||
+        password.length <= 3
       ) {
-        params.login_hint = username;
         // invalid usrname or password -> back to login page
-        res.render("login", {
+        details.params.login_hint = username;
+        return renderPage(res, {
+          view: "login",
           client,
-          uid,
-          params,
-          details: prompt.details,
+          details,
           title: "Sign-in",
-          session: session ? session : undefined,
-          dbg: { params, prompt },
-          flash: "invalid username or password",
+          flash: "invalid credentials",
         });
-        return;
       }
+
       const accountId = await User.authenticate(username, password);
       console.log("accountId: ", accountId);
       if (accountId) {
         // successfully signed in -> finish interaction
         const result: InteractionResults = { login: { account: accountId } };
-        await provider.interactionFinished(req, res, result, {
+        return await provider.interactionFinished(req, res, result, {
           mergeWithLastSubmission: false,
         });
-        return;
       }
       // invalid usrname or password -> back to login page
-      params.login_hint = username;
-      res.render("login", {
+      details.params.login_hint = username;
+      return renderPage(res, {
+        view: "login",
         client,
-        uid,
-        params,
-        details: prompt.details,
+        details,
         title: "Sign-in",
-        session: session ? session : undefined,
-        dbg: { params, prompt },
-        flash: "invalid username or password",
+        flash: "invalid credentials",
       });
-      return;
-    } catch (error) {
-      notFound(req, res);
-      return;
+    } catch (e) {
+      console.error("INTERNAL SERVER ERROR: ", e);
+      return res.status(500).send("INTERNAL SERVER ERROR");
     }
   });
 
   app.get("/interaction/:uid/abort", async (req, res) => {
+    console.log("interaction: abort invoked");
     try {
       // redirect to client/callback
       const { params } = await provider.interactionDetails(req, res);
@@ -135,15 +126,15 @@ export function useRoute(app: Express, provider: Provider): void {
         return;
       }
 
-      notFound(req, res);
-      return;
+      return res.status(404).send("NOT FOUND");
     } catch (e) {
-      notFound(req, res);
-      return;
+      console.error("INTERNAL SERVER ERROR: ", e);
+      return res.status(500).send("INTERNAL SERVER ERROR");
     }
   });
 
   app.post("/interaction/:uid/confirm", setNoCache, parse, async (req, res) => {
+    console.log("interactin: confirmation invoked");
     try {
       const result = {
         consent: {
@@ -154,10 +145,9 @@ export function useRoute(app: Express, provider: Provider): void {
       await provider.interactionFinished(req, res, result, {
         mergeWithLastSubmission: true,
       });
-    } catch (err) {
-      notFound(req, res);
+    } catch (e) {
+      console.error("INTERNAL SERVER ERROR: ", e);
+      return res.status(500).send("INTERNAL SERVER ERROR");
     }
   });
-
-  // app.use((req, res) => res.status(404).send("NOT FOUND."));
 }

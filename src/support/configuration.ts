@@ -117,3 +117,10 @@ export const configuration: Configuration = {
     RefreshToken: 1 * 24 * 60 * 60, // 1 day in seconds
   },
 };
+
+const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
+const ISSUER = process.env.ISSUER || "NOISSUER";
+const PORT = process.env.PORT || 3000; // Port number
+const PROD = process.env.NODE_ENV === "production";
+
+export { DATABASE_URI, ISSUER, PORT, PROD };
