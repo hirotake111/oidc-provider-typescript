@@ -16,6 +16,7 @@ import {
   KoaContextWithOIDC,
   Account,
   ClaimsParameterMember,
+  AccountClaims,
 } from "oidc-provider";
 
 export interface IcreateUserProps {
@@ -139,7 +140,7 @@ export class User extends Model {
         scope: string,
         claims: { [key: string]: null | ClaimsParameterMember },
         rejected: string[]
-      ) {
+      ): Promise<AccountClaims> {
         console.log("use: ", use);
         console.log("scope: ", scope);
         console.log("claims: ", claims);
@@ -147,7 +148,12 @@ export class User extends Model {
         return {
           sub,
           email: "noreply@example.com",
-          email_verified: "noreply@example.com",
+          email_verified: false,
+          name: account.username,
+          display_name: account.displayName,
+          given_name: account.firstName,
+          family_name: account.lastName,
+          updated_at: account.updatedAt,
         };
       },
     };

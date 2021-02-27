@@ -18,7 +18,6 @@ const SECRETKEY = process.env.SECRETKEY;
 
 const URL = `http://${HOSTNAME}:${PORT}`;
 const app = express();
-const store = new Map();
 
 // Middlewares
 app.use(express.json()); // body-parser
@@ -57,7 +56,7 @@ app.set("view engine", "ejs");
       if (req.session.userId && req.session.username) {
         // already signed in
         res.render("index", {
-          message: `Signed in as ${req.session.username}`,
+          message: `Signed in as ${req.session.username} (${req.session.userId})`,
         });
         return;
       }
@@ -77,22 +76,26 @@ app.set("view engine", "ejs");
     });
 
     // callback endpoint
-    app.get("/callback", (req, res) => {
-      const { error, error_description } = req.query;
-      const params = client.callbackParams(req);
-      const code_verifier = req.session.verifier;
-      console.log(params);
-      client
-        .callback(`${URL}/callback`, params, { code_verifier })
-        .then((tokenSet) => {
-          console.log("received and validated tokens %j", tokenSet);
-          console.log("validated ID Token claims %j", tokenSet.claims());
-          return res.send(tokenSet);
-        })
-        .catch((reason) => {
-          console.error(reason);
-          return res.status(500).send("INTERNAL SERVER ERROR");
+    app.get("/callback", async (req, res) => {
+      try {
+        const params = client.callbackParams(req);
+        const code_verifier = req.session.verifier;
+        const tokenSet = await client.callback(`${URL}/callback`, params, {
+          code_verifier,
         });
+        // console.log("received and validated tokens %j", tokenSet);
+        // console.log("validated ID Token claims %j", tokenSet.claims());
+        const idTokenClaims = tokenSet.claims();
+        // get user info
+        const userInfo = await client.userinfo(tokenSet.access_token);
+        // store session
+        req.session.username = userInfo.name;
+        req.session.userId = userInfo.sub;
+        return res.redirect("/");
+      } catch (e) {
+        console.error(e);
+        return res.status(500).send("INTERNAL SERVER ERROR");
+      }
 
       // res.json({
       //   location: "callback",
@@ -104,6 +107,6 @@ app.set("view engine", "ejs");
 
     app.listen(PORT, () => console.log(`Check out ${URL}`));
   } catch (e) {
-    console.log(e);
+    console.error("Error: ", e);
   }
 })();

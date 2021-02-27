@@ -74,9 +74,9 @@ export const configuration: Configuration = {
   features: {
     devInteractions: { enabled: false }, // defaults to true
 
-    deviceFlow: { enabled: true }, // defaults to false
-    introspection: { enabled: true }, // defaults to false
-    revocation: { enabled: true }, // defaults to false
+    deviceFlow: { enabled: false }, // defaults to false
+    introspection: { enabled: false }, // defaults to false
+    revocation: { enabled: false }, // defaults to false
   },
   jwks: {
     keys: [
