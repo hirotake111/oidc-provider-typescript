@@ -18,6 +18,7 @@ import { User } from "./models/User.model";
 import { AuthService } from "./services/authService";
 import { redirectToHTTPS } from "./controllers/User.controller";
 import { dbFactory } from "./support/dbFactory";
+import { useMiddleware } from "./support/middlewares";
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.set("trust proxy", true);
 // Use body-parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+useMiddleware(app);
 // helmet
 app.use(helmet());
 // View settings
@@ -36,7 +38,7 @@ app.set("view engine", "ejs");
 let server: Server;
 (async () => {
   // connect to database
-  await dbFactory(DATABASE_URI, [User], { logging: true });
+  await dbFactory(DATABASE_URI, [User], { logging: false });
 
   // add test user
   if (!PROD) {
@@ -49,7 +51,6 @@ let server: Server;
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    console.log(await User.findAll());
   }
 
   if (PROD) {

@@ -1,9 +1,10 @@
-import { Express, Response } from "express";
+import { Express, Request, Response } from "express";
 import { urlencoded } from "express";
 import { InteractionResults, Provider } from "oidc-provider";
 
 import { AuthService } from "./services/authService";
 import { setNoCache } from "./controllers/User.controller";
+import { csrfProtection } from "./support/middlewares";
 
 const parse = urlencoded({ extended: false });
 
@@ -13,6 +14,7 @@ interface IRenderProps {
   details: any;
   title: string;
   flash?: string;
+  csrfToken?: string;
 }
 
 const renderPage = (res: Response, props: IRenderProps) => {
@@ -25,15 +27,17 @@ const renderPage = (res: Response, props: IRenderProps) => {
     flash,
     title,
     session: details.session ? details.session : undefined,
+    csrfToken: props.csrfToken,
     dbg: { params: details.params, prompt: details.prompt },
   });
 };
 
 export function useRoute(app: Express, provider: Provider): void {
-  app.get("/interaction/:uid", setNoCache, async (req, res) => {
+  app.get("/interaction/:uid", setNoCache, csrfProtection, async (req, res) => {
     try {
       const details = await provider.interactionDetails(req, res);
       const client = await provider.Client.find(details.params.client_id);
+      const csrfToken = req.csrfToken();
 
       switch (details.prompt.name) {
         case "login": {
@@ -42,6 +46,7 @@ export function useRoute(app: Express, provider: Provider): void {
             client,
             details,
             title: "Sign-in",
+            csrfToken,
           });
         }
 
@@ -51,6 +56,7 @@ export function useRoute(app: Express, provider: Provider): void {
             client,
             details,
             title: "Authorize",
+            csrfToken,
           });
         }
 

@@ -2,10 +2,8 @@ import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import { Sequelize } from "sequelize-typescript";
 import bcrypt from "bcrypt";
-import { KoaContextWithOIDC } from "oidc-provider";
 
-import { User, IcreateUserProps } from "./User.model";
-import { isUUIDv4 } from "../support/utils";
+import { User } from "./User.model";
 
 class UserClass {
   public id?: string;
