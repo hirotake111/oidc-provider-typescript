@@ -1,94 +1,36 @@
-import path from "path";
-
-import express from "express";
-import helmet from "helmet";
-import set from "lodash/set";
-import { Provider } from "oidc-provider";
-
-import {
-  configuration,
-  DATABASE_URI,
-  ISSUER,
-  PORT,
-  PROD,
-} from "./support/configuration";
 import { Server } from "http";
+import express from "express";
+
+import { DATABASE_URI, ISSUER, PORT, PROD } from "./support/configuration";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
-import { AuthService } from "./services/authService";
-import { redirectToHTTPS } from "./controllers/User.controller";
 import { dbFactory } from "./support/dbFactory";
-import { useMiddleware } from "./support/middlewares";
-
-const app = express();
-
-// Proxy setting
-// Set the following if this app has web server in front of itself
-app.set("trust proxy", true);
-// Use body-parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-useMiddleware(app);
-// helmet
-app.use(helmet());
-// View settings
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
+import { addTestUser, useSetting } from "./support/utils";
 
 let server: Server;
 (async () => {
+  const app = express();
+
+  // setting configuration
+  useSetting(app);
+
   // connect to database
   await dbFactory(DATABASE_URI, [User], { logging: false });
 
   // add test user
   if (!PROD) {
-    await User.destroy({ where: { username: "test" }, force: true });
-    await User.create({
-      id: "83440b66-11a4-497f-83c4-beaf1eaef9c2",
-      username: "test",
-      password: "$2b$05$nJTc3d1Y1RnUSiboeNEyau2dAlNGACy/ryghOcq4rwLa/pA4eVj6i",
-      displayName: "Test User",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-
-  if (PROD) {
-    set(configuration, "cookies.short.secure", true);
-    set(configuration, "cookies.long.secure", true);
-  }
-
-  // Create a new provider
-  const provider = new Provider(ISSUER, {
-    adapter: undefined, // use default in-memory adapter
-    ...configuration,
-    findAccount: AuthService.findAccount,
-  });
-
-  if (PROD) {
-    // Set the following setting if this app has web server in front of itself
-    app.enable("trust proxy");
-    provider.proxy = true;
-
-    // if HTTP redirect to HTTPS
-    app.use(redirectToHTTPS);
+    await addTestUser();
   }
 
   // Append routes for /interaction
-  useRoute(app, provider);
-  // 404 for the rest of the requests
-  app.use(provider.callback);
+  useRoute(app);
 
-  server = app.listen(PORT, () => {
-    console.log(`CHECK OUT ${ISSUER}/.well-known/openid-configuration`);
-    if (!PROD) console.log("http://localhost:3001");
-  });
+  // start HTTP server
+  server = app.listen(PORT, () =>
+    console.log(`${ISSUER}/.well-known/openid-configuration`)
+  );
 })().catch((err) => {
   if (server && server.listening) server.close();
   console.error(err);
   process.exitCode = 1;
 });
-
-// app.get("/", (req, res) => res.json({ msg: "express + typescript" }));
-
-// app.listen(PORT, () => console.log(`Listening on port ${PORT}...`));

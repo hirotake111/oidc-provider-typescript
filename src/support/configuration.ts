@@ -1,4 +1,3 @@
-import assert from "assert";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,6 +11,13 @@ interface ICtx {
 //   interactionPolicy: { Prompt, base: policy },
 // } = require("../../lib"); // require('oidc-provider');
 import { Configuration, interactionPolicy } from "oidc-provider";
+
+const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
+const ISSUER = process.env.ISSUER || "NOISSUER";
+const PORT = process.env.PORT || 3000; // Port number
+const PROD = process.env.NODE_ENV === "production";
+const ROUNDS = parseInt(process.env.ROUNDS || "5") || 5; // used for password hashing
+const SECRETKEY = process.env.SECRETKEY || "supersecret";
 
 // copies the default policy, already has login and consent prompt policies
 const interactions = interactionPolicy.base(); // policy();
@@ -42,8 +48,15 @@ export const configuration: Configuration = {
     },
   },
   cookies: {
-    long: { signed: true, maxAge: 1 * 24 * 60 * 60 * 1000 }, // 1 day in ms
-    short: { signed: true },
+    long: {
+      signed: true,
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day in ms
+      secure: PROD ? true : false,
+    },
+    short: {
+      signed: true,
+      secure: PROD ? true : false,
+    },
     keys: [
       "some secret key",
       "and also the old rotated away some time ago",
@@ -118,10 +131,4 @@ export const configuration: Configuration = {
   },
 };
 
-const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
-const ISSUER = process.env.ISSUER || "NOISSUER";
-const PORT = process.env.PORT || 3000; // Port number
-const PROD = process.env.NODE_ENV === "production";
-const ROUNDS = parseInt(process.env.ROUNDS || "5") || 5; // used for password hashing
-const SECRETKEY = process.env.SECRETKEY || "supersecret";
 export { DATABASE_URI, ISSUER, PORT, PROD, ROUNDS, SECRETKEY };
