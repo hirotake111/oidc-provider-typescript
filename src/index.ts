@@ -15,6 +15,7 @@ import {
 import { Server } from "http";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
+import { AuthService } from "./services/authService";
 import { redirectToHTTPS } from "./controllers/User.controller";
 import { dbFactory } from "./support/dbFactory";
 
@@ -35,16 +36,20 @@ app.set("view engine", "ejs");
 let server: Server;
 (async () => {
   // connect to database
-  await dbFactory(DATABASE_URI, [User], { logging: false });
+  await dbFactory(DATABASE_URI, [User], { logging: true });
 
   // add test user
   if (!PROD) {
     await User.destroy({ where: { username: "test" }, force: true });
-    await User.createUser({
+    await User.create({
+      id: "83440b66-11a4-497f-83c4-beaf1eaef9c2",
       username: "test",
-      password: "test",
-      displayName: "test",
+      password: "$2b$05$nJTc3d1Y1RnUSiboeNEyau2dAlNGACy/ryghOcq4rwLa/pA4eVj6i",
+      displayName: "Test User",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
+    console.log(await User.findAll());
   }
 
   if (PROD) {
@@ -56,7 +61,7 @@ let server: Server;
   const provider = new Provider(ISSUER, {
     adapter: undefined, // use default in-memory adapter
     ...configuration,
-    findAccount: User.findAccount,
+    findAccount: AuthService.findAccount,
   });
 
   if (PROD) {

@@ -2,7 +2,7 @@ import { Express, Response } from "express";
 import { urlencoded } from "express";
 import { InteractionResults, Provider } from "oidc-provider";
 
-import { User } from "./models/User.model";
+import { AuthService } from "./services/authService";
 import { setNoCache } from "./controllers/User.controller";
 
 const parse = urlencoded({ extended: false });
@@ -67,7 +67,6 @@ export function useRoute(app: Express, provider: Provider): void {
 
   app.post("/interaction/:uid/login", async (req, res, next) => {
     try {
-      console.log("post login");
       // get interaction details and client data
       const details = await provider.interactionDetails(req, res);
       const client = await provider.Client.find(details.params.client_id);
@@ -91,7 +90,7 @@ export function useRoute(app: Express, provider: Provider): void {
         });
       }
 
-      const accountId = await User.authenticate(username, password);
+      const accountId = await AuthService.authenticate(username, password);
       console.log("accountId: ", accountId);
       if (accountId) {
         // successfully signed in -> finish interaction

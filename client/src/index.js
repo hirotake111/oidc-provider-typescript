@@ -96,13 +96,6 @@ app.set("view engine", "ejs");
         console.error(e);
         return res.status(500).send("INTERNAL SERVER ERROR");
       }
-
-      // res.json({
-      //   location: "callback",
-      //   error,
-      //   error_description,
-      //   status_code: res.statusCode,
-      // });
     });
 
     app.listen(PORT, () => console.log(`Check out ${URL}`));

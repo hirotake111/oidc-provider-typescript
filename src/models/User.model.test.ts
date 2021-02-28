@@ -138,97 +138,6 @@ describe("Test User model", () => {
     expect(user?.id).toEqual(bob.id);
   });
 
-  test(".createUser() should create a new user", async () => {
-    expect.assertions(3);
-    // create a new user using .create() method
-    const user: IcreateUserProps = {
-      username: "Adele",
-      password: "mypassword",
-      displayName: "Adele Vance",
-      firstName: "Adele",
-      lastName: "Vance",
-    };
-    try {
-      await User.createUser(user);
-      // fetch user
-      const fetched = await User.findOne({
-        where: { username: user.username },
-      });
-      // it should have user id and createdAt, updatedAt
-      if (!fetched) throw new Error("no user found");
-      expect(fetched.username).toEqual(user.username);
-      expect(fetched.id).toHaveLength(36);
-      // check if the password is different as given one.
-      expect(fetched.password === user.password).toEqual(false);
-    } catch (e) {
-      console.error(e);
-    }
-  });
-
-  test(".createUser() should raise an error if password is too long", async () => {
-    expect.assertions(1);
-    // create a new user using .create() method
-    const user: IcreateUserProps = {
-      username: "Adele",
-      password: "abcdabcdabcdabcdabcdabcdabcdabcd",
-      displayName: "Adele Vance",
-    };
-    try {
-      await User.createUser(user);
-    } catch (e) {
-      expect(e.message).toEqual("password is too long");
-    }
-  });
-
-  test(".createUser() should raise an error if username already exists", async () => {
-    expect.assertions(1);
-    try {
-      // add a new user to database
-      const alice = createAlice();
-      if (!alice.username) throw new Error("test error - username is null");
-      await addUsersToDB(alice);
-      // create a new user using .create() method
-      const user: IcreateUserProps = {
-        username: alice.username,
-        password: "pasword123",
-        displayName: "Adele Vance",
-      };
-      await User.createUser(user);
-    } catch (e) {
-      expect(e.message).toEqual("user already exists");
-    }
-  });
-
-  test(".authenticate() should return id if authenticated", async () => {
-    expect.assertions(1);
-    // create a new user
-    const alice = createAlice();
-    await addUsersToDB(alice);
-    if (alice.username && alice.password && alice.id) {
-      expect(await User.authenticate(alice.username, alice.password)).toEqual(
-        alice.id
-      );
-    }
-  });
-
-  test(".authenticate() should return null if credentials is invald", async () => {
-    try {
-      expect.assertions(2);
-      // create a new user
-      const alice = createAlice();
-      await addUsersToDB(alice);
-      if (!(alice.username && alice.password)) {
-        return;
-      }
-      // password is incorrect
-      expect(await User.authenticate(alice.username, "aaaa")).toEqual(null);
-      // username is incorrect
-      expect(await User.authenticate("other", alice.password)).toEqual(null);
-    } catch (error) {
-      console.error("error: ", error.message);
-    }
-  });
-
   test(".destroy() should delete one account", async () => {
     expect.assertions(3);
     try {
@@ -262,28 +171,6 @@ describe("Test User model", () => {
       expect(await User.destroy({ where: { username: "abcd" } })).toEqual(0);
     } catch (e) {
       console.error(e.message);
-    }
-  });
-
-  test(".findAccount() should return Promise<Account | undefined>", async () => {
-    try {
-      expect.assertions(2);
-      // add a new user to database
-      const alice = createAlice();
-      await addUsersToDB(alice);
-      // find account
-      if (!alice.id) {
-        throw new Error("user not found!");
-      }
-      const context: KoaContextWithOIDC = {} as KoaContextWithOIDC;
-      const account = await User.findAccount(context, alice.id, "token");
-
-      // account should have accountId typed uuid v4
-      expect(isUUIDv4(account?.accountId)).toEqual(true);
-      // account should have function claims
-      expect(typeof account?.claims === "function").toEqual(true);
-    } catch (error) {
-      console.error("error: ", error);
     }
   });
 });
