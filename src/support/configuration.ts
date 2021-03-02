@@ -13,6 +13,7 @@ interface ICtx {
 import { Configuration, interactionPolicy } from "oidc-provider";
 
 const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
+const REDIS_URL = process.env.REDIS_URL || "NOREDISURL";
 const ISSUER = process.env.ISSUER || "NOISSUER";
 const PORT = process.env.PORT || 3000; // Port number
 const PROD = process.env.NODE_ENV === "production";
@@ -131,4 +132,4 @@ export const configuration: Configuration = {
   },
 };
 
-export { DATABASE_URI, ISSUER, PORT, PROD, ROUNDS, SECRETKEY };
+export { DATABASE_URI, REDIS_URL, ISSUER, PORT, PROD, ROUNDS, SECRETKEY };

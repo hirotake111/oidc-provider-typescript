@@ -1,11 +1,20 @@
-import { Provider } from "oidc-provider";
+import {
+  AdapterConstructor,
+  AdapterFactory,
+  Configuration,
+  Provider,
+  FindAccount,
+} from "oidc-provider";
 
-import { AuthService } from "../services/authService";
-import { ISSUER, configuration } from "./configuration";
-
-// Create a new provider
-export const provider = new Provider(ISSUER, {
-  adapter: undefined, // use default in-memory adapter
-  ...configuration,
-  findAccount: AuthService.findAccount,
-});
+export const oidcProviderFactory = (
+  issuer: string,
+  configuration: Configuration,
+  adapter: AdapterConstructor | AdapterFactory | undefined,
+  findAccount: FindAccount
+) => {
+  return new Provider(issuer, {
+    adapter, // use default in-memory adapter
+    ...configuration,
+    findAccount,
+  });
+};

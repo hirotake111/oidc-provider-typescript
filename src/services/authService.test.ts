@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 import { AuthService, IcreateUserProps } from "./authService";
 import { User } from "../models/User.model";
 import { ROUNDS } from "../support/configuration";
-import { create } from "lodash";
 import { KoaContextWithOIDC } from "oidc-provider";
 
 const createUser = (len: number = 10) => ({
