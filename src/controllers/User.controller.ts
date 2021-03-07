@@ -3,8 +3,6 @@ import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, Response } from "express";
 import Provider, { InteractionResults } from "oidc-provider";
 
-import { AuthService } from "../services/authService";
-
 interface IRenderProps {
   view: string;
   client: any;
@@ -14,34 +12,39 @@ interface IRenderProps {
   csrfToken?: string;
 }
 
-const renderPage = (res: Response, props: IRenderProps) => {
-  const { view, client, details, title, flash } = props;
-  return res.render(view, {
-    client,
-    uid: details.uid,
-    params: details.params,
-    details: details.prompt.details,
-    flash,
-    title,
-    session: details.session ? details.session : undefined,
-    csrfToken: props.csrfToken,
-    dbg: { params: details.params, prompt: details.prompt },
-  });
-};
+type asyncAuthMethod = (
+  username: string,
+  password: string
+) => Promise<string | null>;
 
 export class UserController {
   private provider: Provider;
+  private authenticate: asyncAuthMethod;
 
-  constructor(provider: Provider) {
+  constructor(provider: Provider, authenticate: asyncAuthMethod) {
     this.provider = provider;
+    this.authenticate = authenticate;
   }
 
-  public oidcCallback = (
+  public renderPage = (res: Response, props: IRenderProps) => {
+    const { view, client, details, title, flash } = props;
+    res.render(view, {
+      client,
+      uid: details.uid,
+      params: details.params,
+      details: details.prompt.details,
+      flash,
+      title,
+      session: details.session ? details.session : undefined,
+      csrfToken: props.csrfToken,
+      dbg: { params: details.params, prompt: details.prompt },
+    });
+  };
+
+  public oidcCallback = async (
     req: IncomingMessage | Http2ServerRequest,
     res: ServerResponse | Http2ServerResponse
-  ) => {
-    return this.provider.callback(req, res);
-  };
+  ) => this.provider.callback(req, res);
 
   public getInteractionWithNoPrompt = async (
     req: Request,
@@ -50,13 +53,11 @@ export class UserController {
   ) => {
     try {
       const details = await this.provider.interactionDetails(req, res);
-      console.log("details: ", details);
       const client = await this.provider.Client.find(details.params.client_id);
       const csrfToken = req.csrfToken();
-
       switch (details.prompt.name) {
         case "login": {
-          return renderPage(res, {
+          return this.renderPage(res, {
             view: "login",
             client,
             details,
@@ -66,7 +67,7 @@ export class UserController {
         }
 
         case "consent": {
-          return renderPage(res, {
+          return this.renderPage(res, {
             view: "interaction",
             client,
             details,
@@ -81,7 +82,7 @@ export class UserController {
             .send(`PROMPT NAME ${details.prompt.name} NOT FOUND`);
       }
     } catch (e) {
-      console.error("INTERNAL SERVER ERROR: ", e);
+      // console.error("INTERNAL SERVER ERROR: ", e);
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
   };
@@ -108,7 +109,7 @@ export class UserController {
       ) {
         // invalid usrname or password -> back to login page
         details.params.login_hint = username;
-        return renderPage(res, {
+        return this.renderPage(res, {
           view: "login",
           client,
           details,
@@ -117,9 +118,7 @@ export class UserController {
           csrfToken,
         });
       }
-
-      const accountId = await AuthService.authenticate(username, password);
-      // console.log("accountId: ", accountId);
+      const accountId = await this.authenticate(username, password);
       if (accountId) {
         // successfully signed in -> finish interaction
         const result: InteractionResults = { login: { account: accountId } };
@@ -129,7 +128,7 @@ export class UserController {
       }
       // invalid usrname or password -> back to login page
       details.params.login_hint = username;
-      return renderPage(res, {
+      return this.renderPage(res, {
         view: "login",
         client,
         details,
@@ -137,7 +136,6 @@ export class UserController {
         flash: "invalid credentials",
       });
     } catch (e) {
-      console.error("INTERNAL SERVER ERROR: ", e);
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
   };
@@ -147,19 +145,15 @@ export class UserController {
     res: Response,
     next: NextFunction
   ) => {
-    console.log("interaction: abort invoked");
     try {
       // redirect to client/callback
       const { params } = await this.provider.interactionDetails(req, res);
-      const redirectUri = params?.redirect_uri;
-      if (redirectUri) {
-        res.redirect(params.redirect_uri);
-        return;
+      if (params?.redirect_uri) {
+        return res.redirect(params.redirect_uri);
       }
 
       return res.status(404).send("NOT FOUND");
     } catch (e) {
-      console.error("INTERNAL SERVER ERROR: ", e);
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
   };
@@ -169,7 +163,6 @@ export class UserController {
     res: Response,
     next: NextFunction
   ) => {
-    console.log("interactin: confirmation invoked");
     try {
       const result = {
         consent: {
@@ -181,7 +174,6 @@ export class UserController {
         mergeWithLastSubmission: true,
       });
     } catch (e) {
-      console.error("INTERNAL SERVER ERROR: ", e);
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
   };

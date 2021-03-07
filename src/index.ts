@@ -40,7 +40,7 @@ let server: Server;
   );
 
   // get user controller
-  const userController = new UserController(provider);
+  const userController = new UserController(provider, AuthService.authenticate);
 
   if (PROD) {
     // Set the following setting if this app has web server in front of itself

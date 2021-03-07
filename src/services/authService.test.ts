@@ -64,7 +64,7 @@ describe("AuthService", () => {
   });
 
   describe(".authenticate() method", () => {
-    test("It should return id if authenticated", async () => {
+    test("It should return id", async () => {
       try {
         expect.assertions(1);
         const username = "adele";
