@@ -1,4 +1,5 @@
 import { Server } from "http";
+
 import express from "express";
 
 import {
@@ -6,7 +7,7 @@ import {
   ISSUER,
   PORT,
   PROD,
-  configuration,
+  configurationFactory,
 } from "./support/configuration";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
@@ -15,6 +16,7 @@ import { addTestUser, useSetting } from "./support/utils";
 import { UserController } from "./controllers/User.controller";
 import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
+import { clientFactory } from "./support/configLoader";
 
 let server: Server;
 (async () => {
@@ -34,7 +36,7 @@ let server: Server;
   // get OIDC provider
   const provider = oidcProviderFactory(
     ISSUER,
-    configuration,
+    await configurationFactory(clientFactory),
     undefined,
     AuthService.findAccount
   );
