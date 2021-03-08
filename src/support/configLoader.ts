@@ -1,13 +1,41 @@
 import fs from "fs";
-import { ClientMetadata } from "oidc-provider";
+import path from "path";
 
-export const clientFactory = (): Promise<ClientMetadata[]> => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(__dirname + "/../.env.json", "utf8", (err, data) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(JSON.parse(data) as ClientMetadata[]);
-    });
-  });
-};
+import { ClientMetadata, CookiesSetOptions } from "oidc-provider";
+import { JSONWebKeySet } from "jose";
+
+export interface ICookies {
+  names?: {
+    session?: string;
+    interaction?: string;
+    resume?: string;
+    state?: string;
+  };
+  long?: CookiesSetOptions;
+  short?: CookiesSetOptions;
+  keys?: Array<string | Buffer>;
+}
+
+interface IConfigLoaderDataType {
+  clients: ClientMetadata[];
+  cookies?: ICookies;
+}
+
+export class ConfigLoader {
+  private data: IConfigLoaderDataType;
+  private jwks: JSONWebKeySet;
+
+  constructor() {
+    const data = fs.readFileSync(path.resolve("src/.env.json"), "utf8");
+    this.data = JSON.parse(data);
+    this.jwks = JSON.parse(
+      fs.readFileSync(path.resolve("src/jwks.json"), "utf8")
+    ) as JSONWebKeySet;
+  }
+
+  public getClients = (): ClientMetadata[] => this.data.clients;
+
+  public getCookies = (): ICookies | undefined => this.data.cookies;
+
+  public getJwks = (): JSONWebKeySet => this.jwks;
+}

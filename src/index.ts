@@ -16,7 +16,7 @@ import { addTestUser, useSetting } from "./support/utils";
 import { UserController } from "./controllers/User.controller";
 import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
-import { clientFactory } from "./support/configLoader";
+import { ConfigLoader } from "./support/configLoader";
 
 let server: Server;
 (async () => {
@@ -33,10 +33,13 @@ let server: Server;
     await addTestUser();
   }
 
+  // generate configuration
+  const configuration = await configurationFactory(new ConfigLoader());
+
   // get OIDC provider
   const provider = oidcProviderFactory(
     ISSUER,
-    await configurationFactory(clientFactory),
+    configuration,
     undefined,
     AuthService.findAccount
   );
