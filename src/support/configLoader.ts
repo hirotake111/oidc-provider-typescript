@@ -33,7 +33,12 @@ export class ConfigLoader {
     ) as JSONWebKeySet;
   }
 
-  public getClients = (): ClientMetadata[] => this.data.clients;
+  public getClients = (): ClientMetadata[] => {
+    if (!this.data.clients) {
+      throw new Error("NO CLIENTS FOUND IN DATA");
+    }
+    return this.data.clients;
+  };
 
   public getCookies = (): ICookies | undefined => this.data.cookies;
 

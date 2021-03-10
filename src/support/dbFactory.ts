@@ -22,6 +22,6 @@ export async function dbFactory(
     await sequelize.sync();
     return sequelize;
   } catch (e) {
-    throw new Error(e);
+    throw e;
   }
 }

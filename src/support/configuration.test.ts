@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { ClientMetadata, KoaContextWithOIDC } from "oidc-provider";
+import { ConfigLoader } from "./configLoader";
 import { configurationFactory, getRounds } from "./configuration";
 
 const clients = [
@@ -29,11 +30,17 @@ const clientFactoryMock = (): Promise<ClientMetadata[]> => {
   });
 };
 
+class ConfigLoaderMock {
+  public getClients = () => clients;
+  public getCookies = () => ({ cookie: "mycookie" });
+  public getJwks = () => ({ keys: [{ key1: "key" }, { key2: "key" }] });
+}
+
 describe("configurationFactory", () => {
   test("It should return configuration object", async () => {
     expect.assertions(2);
     try {
-      const config = await configurationFactory(clientFactoryMock);
+      const config = await configurationFactory(new ConfigLoaderMock() as any);
       expect(config.clients).toEqual(clients);
       if (!config.interactions?.url) {
         throw new Error();
