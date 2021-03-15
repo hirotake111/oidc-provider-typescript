@@ -122,7 +122,8 @@
       <!-- form -->
       <form autocomplete="off" action="/interaction/<%= uid %>/signup" method="POST" >
         <input required id="username" type="text" name="username" value="user" placeholder="NEW USERNAME">
-        <input required id="password1" type="password" name="password1" value="password" placeholder="PASSWORD">
+        <input required id="displayName" type="text" name="displayName" value="test user" placeholder="DISPLAY NAME">
+        <input required id="password" type="password" name="password" value="password" placeholder="PASSWORD">
         <input required id="password2" type="password" name="password2" value="password" placeholder="CONFIRM PASSWORD">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" id="signup-button" class="signup signup-submit">Sign-up</button>

@@ -1,5 +1,6 @@
 const username = document.querySelector("#username");
-const password1 = document.querySelector("#password1");
+const displayName = document.querySelector("#displayName");
+const password1 = document.querySelector("#password");
 const passwrod2 = document.querySelector("#password2");
 const flash = document.querySelector("#flash");
 
@@ -11,6 +12,12 @@ document.querySelector("form").addEventListener("submit", (ev) => {
   if (username.value.length < 4 || username.value.length > 20) {
     flash.innerHTML =
       "username length should be greater than 4 or less than 20";
+    ev.preventDefault();
+  }
+
+  if (displayName.value.length < 4 || displayName.value.length > 20) {
+    flash.innerHTML =
+      "display name length should be greater than 4 or less than 20";
     ev.preventDefault();
   }
 

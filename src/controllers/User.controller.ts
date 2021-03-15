@@ -2,6 +2,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, Response } from "express";
 import Provider, { InteractionResults } from "oidc-provider";
+import { AuthService, IcreateUserProps } from "../services/authService";
 
 interface IRenderProps {
   view: string;
@@ -217,56 +218,27 @@ export class UserController {
        * create a new user, then finish interaction if possible
        * then redirect to /callback
        */
-      res.send([req.body, details, client]);
+      const props = req.body as IcreateUserProps;
+      const user = await AuthService.signUp({ ...props });
+      if (user) {
+        // successfully signed up -> finish interaction
+        const result: InteractionResults = { login: { account: user.id } };
+        return await this.provider.interactionFinished(req, res, result, {
+          mergeWithLastSubmission: false,
+        });
+      }
+      // something is invalid -> back to singup page
+      details.params.login_hint = props.username;
+      return this.renderPage(res, {
+        view: "signup",
+        client,
+        details,
+        title: "Sign-up",
+        flash: "invalid credentials",
+      });
     } catch (e) {
       console.error(e);
       res.status(500).send("INTERNAL SERVER ERROR");
     }
-    // try {
-    //   // get interaction details and client data
-    //   const details = await this.provider.interactionDetails(req, res);
-    //   const client = await this.provider.Client.find(details.params.client_id);
-    //   const { username, password } = req.body;
-    //   // If body has CSRF token fetch it
-    //   const csrfToken = req.body._csrf ? req.body._csrf : null;
-
-    //   // validate credentials
-    //   if (
-    //     typeof username !== "string" ||
-    //     typeof password !== "string" ||
-    //     username.length <= 3 ||
-    //     password.length <= 3
-    //   ) {
-    //     // invalid usrname or password -> back to login page
-    //     details.params.login_hint = username;
-    //     return this.renderPage(res, {
-    //       view: "login",
-    //       client,
-    //       details,
-    //       title: "Sign-in",
-    //       flash: "invalid credentials",
-    //       csrfToken,
-    //     });
-    //   }
-    //   const accountId = await this.authenticate(username, password);
-    //   if (accountId) {
-    //     // successfully signed in -> finish interaction
-    //     const result: InteractionResults = { login: { account: accountId } };
-    //     return await this.provider.interactionFinished(req, res, result, {
-    //       mergeWithLastSubmission: false,
-    //     });
-    //   }
-    //   // invalid usrname or password -> back to login page
-    //   details.params.login_hint = username;
-    //   return this.renderPage(res, {
-    //     view: "login",
-    //     client,
-    //     details,
-    //     title: "Sign-in",
-    //     flash: "invalid credentials",
-    //   });
-    // } catch (e) {
-    //   return res.status(500).send("INTERNAL SERVER ERROR");
-    // }
   };
 }

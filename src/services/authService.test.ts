@@ -19,12 +19,13 @@ const createUser = (len: number = 10) => ({
 describe("AuthService", () => {
   describe("signUp() method", () => {
     test("It should create a new user", async () => {
-      expect.assertions(4);
+      expect.assertions(5);
       try {
         const user = createUser();
         User.findOne = jest.fn().mockReturnValueOnce(null);
         User.create = jest.fn().mockReturnValue(user);
         const created = await AuthService.signUp(user);
+        expect(created.id).toEqual(user.id);
         expect(created.username).toEqual(user.username);
         expect(created.displayName).toEqual(user.displayName);
         expect(created.firstName).toEqual(user.firstName);

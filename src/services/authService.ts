@@ -20,6 +20,7 @@ export interface IcreateUserProps {
 }
 
 interface ISignUpReturnType {
+  id: string;
   username: string;
   displayName: string;
   firstName?: string;
@@ -54,6 +55,7 @@ export class AuthService {
         updatedAt,
       });
       return {
+        id: user.id,
         username: user.username,
         displayName: user.displayName,
         firstName: user.firstName,
