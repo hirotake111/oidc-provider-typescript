@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>SING IN</title>
+    <title>SIGN UP</title>
     <style>
       @import url(https://fonts.googleapis.com/css?family=Roboto:400,100);
       body {
@@ -12,7 +12,7 @@
         margin-top: 25px;
         margin-bottom: 25px;
       }
-      .login-card {
+      .signup-card {
         padding: 40px;
         padding-top: 0px;
         padding-bottom: 10px;
@@ -23,25 +23,25 @@
         box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
         overflow: hidden;
       }
-      .login-card + .login-card {
+      .signup-card + .signup-card {
         padding-top: 10px;
       }
-      .login-card h1 {
+      .signup-card h1 {
         font-weight: 100;
         text-align: center;
         font-size: 2.3em;
       }
-      .login-card h1 + p {
+      .signup-card h1 + p {
         font-weight: 100;
         text-align: center;
       }
-      .login-card [type=submit] {
+      .signup-card [type=submit] {
         width: 100%;
         display: block;
         margin-bottom: 10px;
         position: relative;
       }
-      .login-card input[type=text], input[type=email], input[type=password] {
+      .signup-card input[type=text], input[type=email], input[type=password] {
         height: 44px;
         font-size: 16px;
         width: 100%;
@@ -54,7 +54,7 @@
         box-sizing: border-box;
         -moz-box-sizing: border-box;
       }
-      .login {
+      .signup {
         text-align: center;
         font-size: 14px;
         font-family: 'Arial', sans-serif;
@@ -62,13 +62,13 @@
         height: 36px;
         padding: 0 8px;
       }
-      .login-submit {
+      .signup-submit {
         border: 0px;
         color: #fff;
         text-shadow: 0 1px rgba(0,0,0,0.1);
         background-color: #4d90fe;
       }
-      .login-card a {
+      .signup-card a {
         text-decoration: none;
         color: #666;
         font-weight: 400;
@@ -76,22 +76,22 @@
         display: inline-block;
         opacity: 0.6;
       }
-      .login-help {
+      .signup-help {
         width: 100%;
         text-align: center;
         font-size: 12px;
       }
-      .login-client-image img {
+      .signup-client-image img {
         margin-bottom: 20px;
         display: block;
         margin-left: auto;
         margin-right: auto;
         width: 20%;
       }
-      .login-card input[type=checkbox] {
+      .signup-card input[type=checkbox] {
         margin-bottom: 10px;
       }
-      .login-card label {
+      .signup-card label {
         color: #999;
       }
       ul {
@@ -105,23 +105,31 @@
       button {
         cursor: pointer;
       }
+      button:disabled {
+        background-color: #999;
+        cursor:unset;
+      }
+      #flash {
+        color: rgba(255, 68, 0, 0.808);
+      }
     </style>
   </head>
   <body>
-    <div class="login-card">
+    <div class="signup-card">
       <h1><%= title %></h1>
-      <% if (flash) { %>
-        <p><%= flash %></p>
-      <% } %>
-      <form autocomplete="off" action="/interaction/<%= uid %>/login" method="post">
-        <input required type="text" name="username" placeholder="Enter username" <% if (!params.login_hint) { %>autofocus="on"<% } else { %> value="<%= params.login_hint %>" <% } %>>
-        <input required type="password" name="password" placeholder="and password" <% if (params.login_hint) { %>autofocus="on"<% } %>>
+      <!-- flash message -->
+      <p id="flash"><% if (flash) flash %></p>
+      <!-- form -->
+      <form autocomplete="off" action="/interaction/<%= uid %>/signup" method="POST" >
+        <input required id="username" type="text" name="username" value="user" placeholder="NEW USERNAME">
+        <input required id="password1" type="password" name="password1" value="password" placeholder="PASSWORD">
+        <input required id="password2" type="password" name="password2" value="password" placeholder="CONFIRM PASSWORD">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
-        <button type="submit" class="login login-submit">Sign-in</button>
+        <button type="submit" id="signup-button" class="signup signup-submit">Sign-up</button>
       </form>
-      <div class="login-help">
-        <a href="/interaction/<%= uid %>/abort">[ Cancel ]</a>
+
+      <div class="signup-help">
+        <a href="/interaction/<%= uid %>">[ Back to login page ]</a>
         <% if (client.tosUri) { %>
           <a href="<%= client.tosUri %>">[ Terms of Service ]</a>
         <% } %>
@@ -129,10 +137,7 @@
           <a href="<%= client.policyUri %>">[ Privacy Policy ]</a>
         <% } %>
       </div>
-      <div style="text-align: right;">
-        <p>Or you can sing up <u><a href="/interaction/<%= uid %>/signup">here</a></u></p>
-      </div>
-
     </div>
+    <script src="/scripts/signup.js"></script>
   </body>
 </html>

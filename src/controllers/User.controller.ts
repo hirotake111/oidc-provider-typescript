@@ -54,7 +54,9 @@ export class UserController {
     try {
       const details = await this.provider.interactionDetails(req, res);
       const client = await this.provider.Client.find(details.params.client_id);
+      // generate csrf token
       const csrfToken = req.csrfToken();
+
       switch (details.prompt.name) {
         case "login": {
           return this.renderPage(res, {
@@ -176,5 +178,95 @@ export class UserController {
     } catch (e) {
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
+  };
+
+  public getInteractionSignup = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      // get interaction details and client data
+      const details = await this.provider.interactionDetails(req, res);
+      const client = await this.provider.Client.find(details.params.client_id);
+      // generate CSRF token
+      const csrfToken = req.csrfToken();
+
+      return this.renderPage(res, {
+        view: "signup",
+        client,
+        details,
+        title: "SIGN UP PAGE",
+        csrfToken,
+      });
+    } catch (e) {
+      console.error("ERROR: ", e);
+      return res.status(500).send("INTERNAL SERVER ERROR");
+    }
+  };
+
+  public postInteractionSignup = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const details = await this.provider.interactionDetails(req, res);
+      const client = await this.provider.Client.find(details.params.client_id);
+      /**
+       * create a new user, then finish interaction if possible
+       * then redirect to /callback
+       */
+      res.send([req.body, details, client]);
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("INTERNAL SERVER ERROR");
+    }
+    // try {
+    //   // get interaction details and client data
+    //   const details = await this.provider.interactionDetails(req, res);
+    //   const client = await this.provider.Client.find(details.params.client_id);
+    //   const { username, password } = req.body;
+    //   // If body has CSRF token fetch it
+    //   const csrfToken = req.body._csrf ? req.body._csrf : null;
+
+    //   // validate credentials
+    //   if (
+    //     typeof username !== "string" ||
+    //     typeof password !== "string" ||
+    //     username.length <= 3 ||
+    //     password.length <= 3
+    //   ) {
+    //     // invalid usrname or password -> back to login page
+    //     details.params.login_hint = username;
+    //     return this.renderPage(res, {
+    //       view: "login",
+    //       client,
+    //       details,
+    //       title: "Sign-in",
+    //       flash: "invalid credentials",
+    //       csrfToken,
+    //     });
+    //   }
+    //   const accountId = await this.authenticate(username, password);
+    //   if (accountId) {
+    //     // successfully signed in -> finish interaction
+    //     const result: InteractionResults = { login: { account: accountId } };
+    //     return await this.provider.interactionFinished(req, res, result, {
+    //       mergeWithLastSubmission: false,
+    //     });
+    //   }
+    //   // invalid usrname or password -> back to login page
+    //   details.params.login_hint = username;
+    //   return this.renderPage(res, {
+    //     view: "login",
+    //     client,
+    //     details,
+    //     title: "Sign-in",
+    //     flash: "invalid credentials",
+    //   });
+    // } catch (e) {
+    //   return res.status(500).send("INTERNAL SERVER ERROR");
+    // }
   };
 }

@@ -1,6 +1,7 @@
 /** utility functions */
 import path from "path";
 import { Express } from "express";
+import express from "express";
 
 import { User } from "../models/User.model";
 
@@ -20,6 +21,8 @@ export const useSetting = (app: Express) => {
   // View settings
   app.set("views", path.join(__dirname, "../views"));
   app.set("view engine", "ejs");
+  // static files
+  app.use(express.static(path.join(__dirname, "../public")));
 };
 
 export const addTestUser = async () => {

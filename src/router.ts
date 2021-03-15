@@ -38,6 +38,17 @@ export function useRoute(app: Express, userController: UserController): void {
     userController.postInteractionConfirm
   );
 
+  app.get(
+    "/interaction/:uid/signup",
+    csrfProtection,
+    userController.getInteractionSignup
+  );
+  app.post(
+    "/interaction/:uid/signup",
+    csrfProtection,
+    userController.postInteractionSignup
+  );
+
   // OIDC provider callbacks
   app.use(userController.oidcCallback);
 }
