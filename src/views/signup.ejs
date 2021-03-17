@@ -118,7 +118,9 @@
     <div class="signup-card">
       <h1><%= title %></h1>
       <!-- flash message -->
-      <p id="flash"><% if (flash) flash %></p>
+      <% if (flash) { %>
+        <p id="flash"><%= flash %></p>
+      <% } %>
       <!-- form -->
       <form autocomplete="off" action="/interaction/<%= uid %>/signup" method="POST" >
         <input required id="username" type="text" name="username" value="user" placeholder="NEW USERNAME">

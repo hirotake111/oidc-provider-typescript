@@ -126,7 +126,7 @@ export class UserController {
         // successfully signed in -> finish interaction
         const result: InteractionResults = { login: { account: accountId } };
         return await this.provider.interactionFinished(req, res, result, {
-          mergeWithLastSubmission: false,
+          // mergeWithLastSubmission: false,
         });
       }
       // invalid usrname or password -> back to login page
@@ -173,9 +173,11 @@ export class UserController {
           // rejectedClaims: [], // < uncomment and add rejections here
         },
       };
-      await this.provider.interactionFinished(req, res, result, {
-        mergeWithLastSubmission: true,
-      });
+      const options = {
+        // mergeWithLastSubmission: true,
+      };
+      await this.provider.interactionFinished(req, res, result, options);
+      next();
     } catch (e) {
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
@@ -201,7 +203,7 @@ export class UserController {
         csrfToken,
       });
     } catch (e) {
-      console.error("ERROR: ", e);
+      // console.error("ERROR: ", e);
       return res.status(500).send("INTERNAL SERVER ERROR");
     }
   };
@@ -211,33 +213,45 @@ export class UserController {
     res: Response,
     next: NextFunction
   ) => {
+    let details: any;
+    let client: any;
+    const props = req.body as IcreateUserProps;
     try {
-      const details = await this.provider.interactionDetails(req, res);
-      const client = await this.provider.Client.find(details.params.client_id);
-      /**
-       * create a new user, then finish interaction if possible
-       * then redirect to /callback
-       */
-      const props = req.body as IcreateUserProps;
+      // get details and client information
+      details = await this.provider.interactionDetails(req, res);
+      client = await this.provider.Client.find(details.params.client_id);
+      // get credentials from request body
       const user = await AuthService.signUp({ ...props });
-      if (user) {
-        // successfully signed up -> finish interaction
-        const result: InteractionResults = { login: { account: user.id } };
-        return await this.provider.interactionFinished(req, res, result, {
-          mergeWithLastSubmission: false,
+      if (!user) {
+        // something is invalid -> back to singup page
+        details.params.login_hint = props.username;
+        return this.renderPage(res, {
+          view: "signup",
+          client,
+          details,
+          title: "Sign-up",
+          flash: "invalid credentials",
         });
       }
-      // something is invalid -> back to singup page
-      details.params.login_hint = props.username;
-      return this.renderPage(res, {
-        view: "signup",
-        client,
-        details,
-        title: "Sign-up",
-        flash: "invalid credentials",
+      // successfully signed up -> finish interaction
+      const result: InteractionResults = { login: { account: user.id } };
+      await this.provider.interactionFinished(req, res, result, {
+        mergeWithLastSubmission: false,
       });
     } catch (e) {
-      console.error(e);
+      if (e.message === "user already exists") {
+        // render signup page again
+        const csrfToken = req.csrfToken();
+        details.params.login_hint = props.username;
+        return this.renderPage(res, {
+          view: "signup",
+          client,
+          details,
+          title: "Sign-up",
+          flash: e.message,
+          csrfToken,
+        });
+      }
       res.status(500).send("INTERNAL SERVER ERROR");
     }
   };

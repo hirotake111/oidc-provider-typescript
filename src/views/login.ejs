@@ -105,13 +105,17 @@
       button {
         cursor: pointer;
       }
+      #flash {
+        color: rgba(255, 68, 0, 0.808);
+      }
+
     </style>
   </head>
   <body>
     <div class="login-card">
       <h1><%= title %></h1>
       <% if (flash) { %>
-        <p><%= flash %></p>
+        <p id="flash"><%= flash %></p>
       <% } %>
       <form autocomplete="off" action="/interaction/<%= uid %>/login" method="post">
         <input required type="text" name="username" placeholder="Enter username" <% if (!params.login_hint) { %>autofocus="on"<% } else { %> value="<%= params.login_hint %>" <% } %>>

@@ -54,7 +54,7 @@ describe("User.controller", () => {
     uc = new UserController(provider, authMethodMock);
     // initialize request mock
     req = { body: { username: nanoid(), password: nanoid() } } as Request;
-    req.csrfToken = jest.fn();
+    req.csrfToken = jest.fn().mockReturnValue("token");
     // initialize response mock
     res = {} as Response;
     res.render = jest.fn();
@@ -337,6 +337,109 @@ describe("User.controller", () => {
           throw new Error("UNKNOWN ERROR");
         });
         await uc.postInteractionConfirm(req, res, next);
+        expect(statusMock).toBeCalledTimes(1);
+        expect(statusMock.mock.calls[0][0]).toEqual(500);
+        expect(sendMock).toBeCalledTimes(1);
+        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+      } catch (e) {
+        throw e;
+      }
+    });
+  });
+
+  describe("getInteractionSignup", () => {
+    test("It should render page", async () => {
+      expect.assertions(1);
+      try {
+        await uc.getInteractionSignup(req, res, next);
+        expect(renderMock).toBeCalledTimes(1);
+      } catch (e) {
+        throw e;
+      }
+    });
+
+    test("It should respond 500 if an error is raised", async () => {
+      expect.assertions(5);
+      try {
+        provider.interactionDetails = jest.fn().mockImplementation(() => {
+          throw new Error("UNKNOWN ERROR");
+        });
+        uc.getInteractionSignup(req, res, next);
+        expect(provider.interactionDetails).toBeCalledTimes(1);
+        expect(statusMock).toBeCalledTimes(1);
+        expect(statusMock.mock.calls[0][0]).toEqual(500);
+        expect(sendMock).toBeCalledTimes(1);
+        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+      } catch (e) {
+        throw e;
+      }
+    });
+  });
+
+  describe("postInteractionSignup", () => {
+    test("It should invoke interactionFinished() method", async () => {
+      expect.assertions(6);
+      try {
+        const user = { id: nanoid() };
+        AuthService.signUp = jest.fn().mockReturnValue(user);
+        const signUpMock = AuthService.signUp as jest.Mock;
+        await uc.postInteractionSignup(req, res, next);
+        expect(signUpMock).toBeCalledTimes(1);
+        expect(signUpMock.mock.calls[0][0]).toEqual({ ...req.body });
+        expect(interactionFinishedMock).toBeCalledTimes(1);
+        expect(interactionFinishedMock.mock.calls[0][0]).toEqual(req);
+        expect(interactionFinishedMock.mock.calls[0][1]).toEqual(res);
+        expect(interactionFinishedMock.mock.calls[0][2]).toEqual({
+          login: { account: user.id },
+        });
+      } catch (e) {
+        throw e;
+      }
+    });
+
+    test("It should render page if creating user failed", async () => {
+      expect.assertions(3);
+      try {
+        const user = null;
+        AuthService.signUp = jest.fn().mockReturnValue(user);
+        const signUpMock = AuthService.signUp as jest.Mock;
+        await uc.postInteractionSignup(req, res, next);
+        expect(signUpMock).toBeCalledTimes(1);
+        expect(signUpMock.mock.calls[0][0]).toEqual({ ...req.body });
+        expect(renderMock).toBeCalledTimes(1);
+      } catch (e) {
+        throw e;
+      }
+    });
+
+    test("It should render signup page if user already exists", async () => {
+      expect.assertions(5);
+      try {
+        const csrfToken = req.csrfToken();
+        AuthService.signUp = jest.fn().mockImplementation(() => {
+          throw new Error("user already exists");
+        });
+        const signUpMock = AuthService.signUp as jest.Mock;
+        await uc.postInteractionSignup(req, res, next);
+        expect(signUpMock).toHaveBeenCalledTimes(1);
+        expect(renderMock).toHaveBeenCalledTimes(1);
+        expect(renderMock.mock.calls[0][0]).toEqual("signup");
+        expect(renderMock.mock.calls[0][1].title).toEqual("Sign-up");
+        expect(renderMock.mock.calls[0][1].csrfToken).toEqual(csrfToken);
+      } catch (e) {
+        throw e;
+      }
+    });
+
+    test("It should respond 500 if an error is raised", async () => {
+      expect.assertions(5);
+      try {
+        AuthService.signUp = jest.fn().mockImplementation(() => {
+          throw new Error("DATABASE ERROR");
+        });
+        const signUpMock = AuthService.signUp as jest.Mock;
+        await uc.postInteractionSignup(req, res, next);
+        expect(signUpMock).toBeCalledTimes(1);
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
