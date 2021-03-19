@@ -17,6 +17,7 @@ import { UserController } from "./controllers/User.controller";
 import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
 import { ConfigLoader } from "./support/configLoader";
+import { RedisAdapter } from "./adapters/redisAdapter";
 
 let server: Server;
 (async () => {
@@ -40,7 +41,8 @@ let server: Server;
   const provider = oidcProviderFactory(
     ISSUER,
     configuration,
-    undefined,
+    // undefined,
+    RedisAdapter,
     AuthService.findAccount
   );
 

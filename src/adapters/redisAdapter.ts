@@ -5,10 +5,6 @@ import { REDIS_URL } from "../support/configuration";
 
 const client = new Redis(REDIS_URL, { keyPrefix: "oidc:" });
 
-/* Name of the oidc-provider model. One of "Session", "AccessToken",
- * "AuthorizationCode", "RefreshToken", "ClientCredentials", "Client", "InitialAccessToken",
- * "RegistrationAccessToken", "DeviceCode", "Interaction", "ReplayDetection", or "PushedAuthorizationRequest"
- */
 const consumable = new Set(["AuthorizationCode", "RefreshToken", "DeviceCode"]);
 
 /**
@@ -17,7 +13,9 @@ const consumable = new Set(["AuthorizationCode", "RefreshToken", "DeviceCode"]);
  * @returns "grant:id"
  */
 const grantKeyFor = (id: string): string => {
-  return `grant:${id}`;
+  const key = `grant:${id}`;
+  // console.log(`grant key: ${key}`);
+  return key;
 };
 
 /**
@@ -41,7 +39,18 @@ function uidKeyFor(uid: string) {
 export class RedisAdapter implements Adapter {
   private name: string;
 
+  /**
+   *
+   * Creates an instance of MyAdapter for an oidc-provider model.
+   *
+   * @constructor
+   * @param {string} name Name of the oidc-provider model. One of "Grant, "Session", "AccessToken",
+   * "AuthorizationCode", "RefreshToken", "ClientCredentials", "Client", "InitialAccessToken",
+   * "RegistrationAccessToken", "DeviceCode", "Interaction", "ReplayDetection", or "PushedAuthorizationRequest"
+   *
+   */
   constructor(name: string) {
+    // console.log(`Instanciate Adapter(${name})`);
     this.name = name;
   }
 
@@ -156,146 +165,186 @@ export class RedisAdapter implements Adapter {
    * - exp {number} - timestamp of the replay object cache expiration
    * - iat {number} - timestamp of the replay object cache's creation
    */
-
   async upsert(
     id: string,
     payload: AdapterPayload,
     expiresIn: number
   ): Promise<undefined | void> {
-    console.log("upsert()");
-
+    // console.log(`upsert(id: ${id}, name: ${this.name})`);
     // console.log("payload: ", payload);
-    // get key ("name:id")
-    const key = this.key(id);
-    // if consumable has the name of OIDC model,
-    const store = JSON.stringify(payload);
-    // const store = consumable.has(this.name)
-    //   ? { payload: JSON.stringify(payload) }
-    //   : JSON.stringify(payload);
-
-    // create pipeline
-    const pipeline = client.multi();
-    // set data
-    if (consumable.has(this.name)) {
-      pipeline.hmset(key, store);
-    } else {
-      pipeline.set(key, store);
-    }
-    // set expiration
-    pipeline.expire(key, expiresIn);
-
-    // upsert grant key
-    if (payload.grantId) {
-      const grantKey = grantKeyFor(payload.grantId);
-      console.log("grantKey: ", grantKey);
-      // Insert all the specified values at the tail
-      // of the list stored at key. If key does not exist,
-      // it is created as empty list before performing
-      // the push operation.
-      pipeline.rpush(grantKey, key);
-      // if you're seeing grant key lists growing out of acceptable proportions consider using LTRIM
-      // here to trim the list to an appropriate length
-      const ttl = await client.ttl(grantKey);
-      if (expiresIn > ttl) {
-        pipeline.expire(grantKey, expiresIn);
+    try {
+      // get key
+      const key = this.key(id);
+      // create pipeline
+      const pipeline = client.multi();
+      // upsert payload data
+      if (consumable.has(this.name)) {
+        pipeline.hset(key, { payload: JSON.stringify(payload) });
+      } else {
+        pipeline.set(key, JSON.stringify(payload));
       }
-    }
 
-    if (payload.userCode) {
-      console.log("upsert user code");
-      const userCodeKey = userCodeKeyFor(payload.userCode);
-      console.log("userCodeKey: ", userCodeKey);
-      pipeline.set(userCodeKey, id);
-      pipeline.expire(userCodeKey, expiresIn);
-    }
+      // set expiration
+      if (expiresIn) {
+        pipeline.expire(key, expiresIn);
+      }
 
-    if (payload.uid) {
-      console.log("upsert UID key");
-      const uidKey = uidKeyFor(payload.uid);
-      console.log("uidKey: ", uidKey);
-      pipeline.set(uidKey, id);
-      pipeline.expire(uidKey, expiresIn);
-    }
+      // upsert grant key
+      if (payload.grantId) {
+        const grantKey = grantKeyFor(payload.grantId);
+        // Insert all the specified values at the tail of the list stored at key. If key does not exist,
+        // it is created as empty list before performing the push operation.
+        pipeline.rpush(grantKey, key);
+        // console.log(`upsert grant key ${grantKey}, name: ${this.name}`);
+        // if you're seeing grant key lists growing out of acceptable proportions consider using LTRIM
+        // here to trim the list to an appropriate length
+        const ttl = await client.ttl(grantKey);
+        if (expiresIn && expiresIn > ttl) {
+          pipeline.expire(grantKey, expiresIn);
+        }
+      }
 
-    // execute commands
-    await pipeline.exec();
+      // upsert user code
+      if (payload.userCode) {
+        const userCodeKey = userCodeKeyFor(payload.userCode);
+        pipeline.set(userCodeKey, id);
+        if (expiresIn) {
+          pipeline.expire(userCodeKey, expiresIn);
+        }
+      }
+
+      // upsert UID
+      if (payload.uid) {
+        // console.log("upsert UID key");
+        const uidKey = uidKeyFor(payload.uid);
+        // console.log(`upsert uidKey: ${uidKey}, ${id}, name: ${this.name}`);
+        pipeline.set(uidKey, id);
+        if (expiresIn) {
+          pipeline.expire(uidKey, expiresIn);
+        }
+      }
+
+      // execute commands
+      await pipeline.exec();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   }
 
   async find(id: string): Promise<AdapterPayload | undefined | void> {
-    console.log(
-      "find(), this.name: ",
-      this.name,
-      " consumable has it: ",
-      consumable.has(this.name)
-    );
-    const key = this.key(id);
-    console.log("key: ", key);
-    const data = consumable.has(this.name)
-      ? await client.hgetall(key)
-      : await client.get(key);
-
-    if (!data) {
-      return undefined;
+    // console.log(`find(id: ${id}), name: ${this.name}`);
+    try {
+      // get key
+      const key = this.key(id);
+      const data = consumable.has(this.name)
+        ? await client.hgetall(key)
+        : await client.get(key);
+      // console.log("data: ", data);
+      if (!data) {
+        return undefined;
+      }
+      if (typeof data === "string") {
+        return JSON.parse(data);
+      }
+      const { payload, ...rest } = data;
+      return { ...rest, ...JSON.parse(payload) };
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
-
-    console.log("data: ", data);
-    if (typeof data === "string") {
-      return JSON.parse(data);
-    }
-    console.warn("data is not string but ", typeof data);
-    const { payload, ...rest } = data;
-    return {
-      ...rest,
-      ...JSON.parse(payload),
-    };
   }
 
   async findByUid(uid: string): Promise<AdapterPayload | undefined | void> {
-    console.log("findByUid()");
     // get ID using UID
-    const id = await client.get(uidKeyFor(uid));
-    if (id) {
-      return this.find(id);
+    try {
+      const id = await client.get(uidKeyFor(uid));
+      // console.log(`findByUid(uid: ${uid}), name: ${this.name}, got ID: ${id}`);
+      const data = id ? await this.find(id) : null;
+      if (data) {
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
   }
 
   async findByUserCode(
     userCode: string
   ): Promise<AdapterPayload | undefined | void> {
-    console.log("findByUserCode()");
+    // console.log(`findByUserCode(code: ${userCode}), name: ${this.name}`);
     // get "userCode:userCode" using code
-    const id = await client.get(userCodeKeyFor(userCode));
-    if (id) {
-      return this.find(id);
+    try {
+      const id = await client.get(userCodeKeyFor(userCode));
+      if (id) {
+        return this.find(id);
+      }
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
   }
 
   async destroy(id: string): Promise<undefined | void> {
-    console.log("destroy()");
     const key = this.key(id);
-    await client.del(key);
+    // console.log(`destroy(id: ${id}), name: ${this.name} -> destroy ${key}`);
+    try {
+      await client.del(key);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   }
 
   async revokeByGrantId(grantId: string): Promise<undefined | void> {
-    console.log("revokeByGrantId()");
-    const multi = client.multi();
-    const tokens = await client.lrange(grantKeyFor(grantId), 0, -1);
-    tokens.forEach((token) => multi.del(token));
-    multi.del(grantKeyFor(grantId));
-    await multi.exec();
+    // console.log(`revokeByGrantId(grantId: ${grantId}), name: ${this.name}`);
+    try {
+      const pipeline = client.multi();
+      const tokens = await client.lrange(grantKeyFor(grantId), 0, -1);
+      tokens.forEach((token) => pipeline.del(token));
+      pipeline.del(grantKeyFor(grantId));
+      await pipeline.exec();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   }
 
+  /**
+   *
+   * Mark a stored oidc-provider model as consumed (not yet expired though!). Future finds for this
+   * id should be fulfilled with an object containing additional property named "consumed" with a
+   * truthy value (timestamp, date, boolean, etc).
+   *
+   * @return {Promise} Promise fulfilled when the operation succeeded. Rejected with error when
+   * encountered.
+   * @param {string} id Identifier of oidc-provider model
+   *
+   */
   async consume(id: string): Promise<undefined | void> {
-    console.log("consume()");
-    await client.hset(this.key(id), "consumed", Math.floor(Date.now() / 1000));
+    // console.log(`${this.name}: consume(id: ${id})`);
+    const key = this.key(id);
+    // console.log(`key: ${key}`);
+    try {
+      // set consumed field with current time
+      await client.hset(key, {
+        consumed: Math.floor(Date.now() / 1000).toString(),
+      });
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   }
 
   /**
    *
    * @param id string
-   * @returns "name:id"
+   * @returns key string "name:id"
    */
   key(id: string): string {
-    return `${this.name}:${id}`;
+    const key = `${this.name}:${id}`;
+    // console.log(`key: ${key}`);
+    return key;
   }
 }

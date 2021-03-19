@@ -79,12 +79,13 @@ app.set("view engine", "ejs");
     app.get("/callback", async (req, res) => {
       try {
         const params = client.callbackParams(req);
+        console.log("params: ", params);
         const code_verifier = req.session.verifier;
         const tokenSet = await client.callback(`${URL}/callback`, params, {
           code_verifier,
         });
-        // console.log("received and validated tokens %j", tokenSet);
-        // console.log("validated ID Token claims %j", tokenSet.claims());
+        console.log("received and validated tokens %j", tokenSet);
+        console.log("validated ID Token claims %j", tokenSet.claims());
         const idTokenClaims = tokenSet.claims();
         // get user info
         const userInfo = await client.userinfo(tokenSet.access_token);
@@ -93,8 +94,8 @@ app.set("view engine", "ejs");
         req.session.userId = userInfo.sub;
         return res.redirect("/");
       } catch (e) {
-        console.error(e);
-        return res.status(500).send("INTERNAL SERVER ERROR");
+        // console.error(e);
+        return res.status(500).send(e.message); //.send("INTERNAL SERVER ERROR");
       }
     });
 
