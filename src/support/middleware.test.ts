@@ -9,7 +9,7 @@ import {
 
 let req: Request;
 let res: Response;
-let next = jest.fn() as NextFunction;
+const next = jest.fn() as NextFunction;
 let getMock: jest.Mock;
 let setMock: jest.Mock;
 let redirectMock: jest.Mock;

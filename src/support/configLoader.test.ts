@@ -10,7 +10,10 @@ describe("ConfigLoader", () => {
         throw new Error("ERROR READING FILE DATA");
       });
       try {
-        new ConfigLoader();
+        const configration = new ConfigLoader();
+        if (!configration) {
+          throw new Error("error");
+        }
       } catch (e) {
         expect(e.message).toEqual("ERROR READING FILE DATA");
       }

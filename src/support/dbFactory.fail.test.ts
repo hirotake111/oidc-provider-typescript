@@ -9,7 +9,9 @@ jest.mock("sequelize-typescript", () => {
         authenticate: () => {
           throw new Error(msg);
         },
-        sync: () => {},
+        sync: () => {
+          return;
+        },
       };
     }),
   };

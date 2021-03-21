@@ -4,7 +4,7 @@ import { UserController } from "./User.controller";
 import { nanoid } from "nanoid";
 
 const authenticatedUsername = "authenticatedusername";
-let authMethodMock = jest.fn().mockReturnValue(authenticatedUsername);
+const authMethodMock = jest.fn().mockReturnValue(authenticatedUsername);
 
 let provider: any;
 let uc: UserController;
@@ -113,12 +113,12 @@ describe("User.controller", () => {
 
     test("It should raise an error", () => {
       expect.assertions(1);
-      const res = {} as Response;
-      res.render = jest.fn().mockImplementation(() => {
+      const response = {} as Response;
+      response.render = jest.fn().mockImplementation(() => {
         throw new Error("res.render throwed an error");
       });
       try {
-        uc.renderPage(res, props);
+        uc.renderPage(response, props);
       } catch (e) {
         expect(e.message).toEqual("res.render throwed an error");
       }
@@ -130,7 +130,7 @@ describe("User.controller", () => {
       expect.assertions(3);
       uc.renderPage = jest.fn();
       // below needed in order to check passed params
-      let renderPageMock = uc.renderPage as jest.Mock;
+      const renderPageMock = uc.renderPage as jest.Mock;
       try {
         await uc.getInteractionWithNoPrompt(req, res, next);
         expect(provider.interactionDetails).toBeCalledTimes(1);
@@ -183,15 +183,15 @@ describe("User.controller", () => {
           new Error("ERROR WHILE PARSING INTERACTION DETAILS")
         );
       // set response mock
-      const res = {} as Response;
-      res.status = jest.fn().mockReturnThis();
-      res.send = jest.fn();
-      const statusMock = res.status as jest.Mock;
-      const sendMock = res.send as jest.Mock;
+      const response = {} as Response;
+      response.status = jest.fn().mockReturnThis();
+      response.send = jest.fn();
+      const mockStatus = response.status as jest.Mock;
+      const mockSend = response.send as jest.Mock;
       try {
-        await uc.getInteractionWithNoPrompt(req, res, next);
-        expect(statusMock.mock.calls[0][0]).toEqual(500);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        await uc.getInteractionWithNoPrompt(req, response, next);
+        expect(mockStatus.mock.calls[0][0]).toEqual(500);
+        expect(mockSend.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
       } catch (e) {
         throw e;
       }
@@ -212,9 +212,12 @@ describe("User.controller", () => {
 
     test("It should render login page if not authenticated", async () => {
       expect.assertions(2);
-      const uc = new UserController(provider, jest.fn().mockReturnValue(null));
+      const userController = new UserController(
+        provider,
+        jest.fn().mockReturnValue(null)
+      );
       try {
-        await uc.postInteractionLogin(req, res, next);
+        await userController.postInteractionLogin(req, res, next);
         expect(renderMock).toBeCalledTimes(1);
         expect(renderMock.mock.calls[0][0]).toEqual("login");
       } catch (e) {

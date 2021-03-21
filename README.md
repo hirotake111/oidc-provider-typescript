@@ -13,9 +13,9 @@ docker build -t nodeapp-dev -f Dockerfile-dev .
 
 ```bash
 # Start container
-docker run -d -p 3000:3000 --name $APPNAME $IMAGE
+docker-compose up -d
 # Stop container
-docker stop $APPNAME && docker rm $APPNAME
+docker-compose down
 ```
 
 ### Run Testing client

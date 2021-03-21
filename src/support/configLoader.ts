@@ -13,7 +13,7 @@ export interface ICookies {
   };
   long?: CookiesSetOptions;
   short?: CookiesSetOptions;
-  keys?: Array<string | Buffer>;
+  keys?: (string | Buffer)[];
 }
 
 interface IConfigLoaderDataType {

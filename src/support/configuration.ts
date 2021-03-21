@@ -18,7 +18,7 @@ import {
 import { ConfigLoader } from "./configLoader";
 
 export const getRounds = (env: string | undefined) => {
-  const n = parseInt(env || "5");
+  const n = parseInt(env || "5", 10);
   return n ? n : 5;
 };
 
@@ -48,8 +48,6 @@ interface IClientType {
   grant_types: string[];
   redirect_uris: string[];
 }
-
-interface configurationFactoryProps {}
 
 export type ClientFactory = () => Promise<ClientMetadata[]>;
 
