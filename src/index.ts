@@ -18,6 +18,7 @@ import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
 import { ConfigLoader } from "./support/configLoader";
 import { RedisAdapter } from "./adapters/redisAdapter";
+import { SequelizeOptions } from "sequelize-typescript";
 
 let server: Server;
 (async () => {
@@ -27,7 +28,18 @@ let server: Server;
   useSetting(app);
 
   // connect to database
-  await dbFactory(DATABASE_URI, [User], { logging: false });
+  const options: SequelizeOptions = PROD
+    ? { logging: false }
+    : {
+        logging: false,
+        dialectOptions: {
+          ssl: {
+            requre: true,
+            rejectUnauthorized: false,
+          },
+        },
+      };
+  await dbFactory(DATABASE_URI, [User], options);
 
   // add test user
   if (!PROD) {
