@@ -6,7 +6,6 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const { Issuer, generators } = require("openid-client");
-
 assert(process.env.ISSUER, "==== ISSUER is empty ====");
 assert(process.env.PORT, "==== PORT is empty ====");
 assert(process.env.HOSTNAME, "==== HOSTNAME is empty ====");

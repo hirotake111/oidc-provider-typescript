@@ -7,7 +7,7 @@ import {
   useMiddleware,
 } from "./support/middlewares";
 import { UserController } from "./controllers/User.controller";
-import { PROD } from "./support/configuration";
+import { PROD } from "./config";
 
 export function useRoute(app: Express, userController: UserController): void {
   if (PROD) {

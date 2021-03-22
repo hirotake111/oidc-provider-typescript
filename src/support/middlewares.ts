@@ -5,7 +5,7 @@ import csrf from "csurf";
 import cookieParser from "cookie-parser";
 import { urlencoded, json } from "express";
 
-import { SECRETKEY } from "./configuration";
+import { SECRETKEY } from "../config";
 import helmet from "helmet";
 
 export const csrfProtection = csrf({ cookie: true });

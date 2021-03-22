@@ -8,7 +8,7 @@ import {
 } from "oidc-provider";
 
 import { User } from "../models/User.model";
-import { ROUNDS } from "../support/configuration";
+import { ROUNDS } from "../config";
 import { isUUIDv4 } from "../support/utils";
 
 export interface IcreateUserProps {

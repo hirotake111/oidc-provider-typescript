@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { ClientMetadata, KoaContextWithOIDC } from "oidc-provider";
-import { ConfigLoader } from "./configLoader";
-import { configurationFactory, getRounds } from "./configuration";
+import { configurationFactory } from "./configuration";
+import { getRounds } from "../config";
 
 const clients = [
   {

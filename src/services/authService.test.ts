@@ -2,9 +2,9 @@ import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import bcrypt from "bcrypt";
 
-import { AuthService, IcreateUserProps } from "./authService";
+import { AuthService } from "./authService";
 import { User } from "../models/User.model";
-import { ROUNDS } from "../support/configuration";
+import { ROUNDS } from "../config";
 import { KoaContextWithOIDC } from "oidc-provider";
 
 const createUser = (len: number = 10) => ({

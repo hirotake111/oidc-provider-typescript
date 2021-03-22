@@ -1,7 +1,7 @@
 // npm i ioredis@^4.0.0
 import Redis from "ioredis";
 import { Adapter, AdapterPayload } from "oidc-provider";
-import { REDIS_URL } from "../support/configuration";
+import { REDIS_URL } from "../config";
 
 const client = new Redis(REDIS_URL, { keyPrefix: "oidc:" });
 

@@ -1,20 +1,17 @@
-import fs from "fs";
-import path from "path";
-
-import { ClientMetadata } from "oidc-provider";
+import { ClientMetadata, CookiesSetOptions } from "oidc-provider";
 import { JSONWebKeySet } from "jose";
 import { IConfigLoader, IConfigLoaderDataType, ICookies } from "../types";
 
-export class ConfigLoader implements IConfigLoader {
+export class ConfigLoaderEnv implements IConfigLoader {
   private data: IConfigLoaderDataType;
   private jwks: JSONWebKeySet;
 
   constructor() {
-    const data = fs.readFileSync(path.resolve("src/.env.json"), "utf8");
-    this.data = JSON.parse(data);
-    this.jwks = JSON.parse(
-      fs.readFileSync(path.resolve("src/jwks.json"), "utf8")
-    ) as JSONWebKeySet;
+    console.log("==== LOADING CONFIGURATION FROM ENVIRONMENT VARIABLES ===");
+    this.data = JSON.parse(
+      process.env.OIDCCONFIGURATION || "{}"
+    ) as IConfigLoaderDataType;
+    this.jwks = JSON.parse(process.env.JWKS || "{}") as JSONWebKeySet;
   }
 
   public getClients = (): ClientMetadata[] => {

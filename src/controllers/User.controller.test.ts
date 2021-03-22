@@ -316,7 +316,7 @@ describe("User.controller", () => {
 
   describe("postInteractionConfirm", () => {
     test("It should invoke interactionFinished method", async () => {
-      expect.assertions(5);
+      expect.assertions(4);
       try {
         await uc.postInteractionConfirm(req, res, next);
         expect(interactionFinishedMock).toBeCalledTimes(1);
@@ -324,9 +324,6 @@ describe("User.controller", () => {
         expect(interactionFinishedMock.mock.calls[0][1]).toEqual(res);
         expect(interactionFinishedMock.mock.calls[0][2]).toEqual({
           consent: {},
-        });
-        expect(interactionFinishedMock.mock.calls[0][3]).toEqual({
-          mergeWithLastSubmission: true,
         });
       } catch (e) {
         throw e;

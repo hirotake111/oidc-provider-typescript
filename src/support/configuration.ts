@@ -1,4 +1,4 @@
-import dotenv, { config } from "dotenv";
+import dotenv from "dotenv";
 dotenv.config();
 
 interface ICtx {
@@ -7,28 +7,13 @@ interface ICtx {
   };
 }
 
-// const {
-//   interactionPolicy: { Prompt, base: policy },
-// } = require("../../lib"); // require('oidc-provider');
 import {
   ClientMetadata,
   Configuration,
   interactionPolicy,
 } from "oidc-provider";
+import { IConfigLoader } from "../types";
 import { ConfigLoader } from "./configLoader";
-
-export const getRounds = (env: string | undefined) => {
-  const n = parseInt(env || "5", 10);
-  return n ? n : 5;
-};
-
-const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
-const REDIS_URL = process.env.REDIS_URL || "NOREDISURL";
-const ISSUER = process.env.ISSUER || "NOISSUER";
-const PORT = process.env.PORT || 3000; // Port number
-const PROD = process.env.NODE_ENV === "production";
-const ROUNDS = getRounds(process.env.ROUNDS); // used for password hashing
-const SECRETKEY = process.env.SECRETKEY || "supersecret";
 
 // copies the default policy, already has login and consent prompt policies
 const interactions = interactionPolicy.base(); // policy();
@@ -52,7 +37,7 @@ interface IClientType {
 export type ClientFactory = () => Promise<ClientMetadata[]>;
 
 export const configurationFactory = async (
-  configLoader: ConfigLoader
+  configLoader: IConfigLoader
 ): Promise<Configuration> => {
   const clients = configLoader.getClients();
   const cookies = configLoader.getCookies();
@@ -105,5 +90,3 @@ export const configurationFactory = async (
     },
   };
 };
-
-export { DATABASE_URI, REDIS_URL, ISSUER, PORT, PROD, ROUNDS, SECRETKEY };

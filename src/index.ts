@@ -2,13 +2,8 @@ import { Server } from "http";
 
 import express from "express";
 
-import {
-  DATABASE_URI,
-  ISSUER,
-  PORT,
-  PROD,
-  configurationFactory,
-} from "./support/configuration";
+import { configurationFactory } from "./support/configuration";
+import { DATABASE_URI, ISSUER, PORT, PROD } from "./config";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
 import { dbFactory } from "./support/dbFactory";
@@ -17,6 +12,7 @@ import { UserController } from "./controllers/User.controller";
 import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
 import { ConfigLoader } from "./support/configLoader";
+import { ConfigLoaderEnv } from "./support/configLoaderEnv";
 import { RedisAdapter } from "./adapters/redisAdapter";
 import { SequelizeOptions } from "sequelize-typescript";
 
@@ -29,8 +25,7 @@ let server: Server;
 
   // connect to database
   const options: SequelizeOptions = PROD
-    ? { logging: false }
-    : {
+    ? {
         logging: false,
         dialectOptions: {
           ssl: {
@@ -38,7 +33,8 @@ let server: Server;
             rejectUnauthorized: false,
           },
         },
-      };
+      }
+    : { logging: false };
   await dbFactory(DATABASE_URI, [User], options);
 
   // add test user
@@ -47,7 +43,7 @@ let server: Server;
   }
 
   // generate configuration
-  const configuration = await configurationFactory(new ConfigLoader());
+  const configuration = await configurationFactory(new ConfigLoaderEnv());
 
   // get OIDC provider
   const provider = oidcProviderFactory(
