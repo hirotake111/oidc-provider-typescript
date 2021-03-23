@@ -449,4 +449,15 @@ describe("User.controller", () => {
       }
     });
   });
+
+  describe("getRoot", () => {
+    test("It should response OK", async () => {
+      expect.assertions(4);
+      uc.getRoot(req, res);
+      expect(statusMock).toHaveBeenCalledTimes(1);
+      expect(statusMock.mock.calls[0][0]).toEqual(200);
+      expect(sendMock).toHaveBeenCalledTimes(1);
+      expect(sendMock.mock.calls[0][0]).toEqual("OK");
+    });
+  });
 });

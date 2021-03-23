@@ -17,6 +17,9 @@ export function useRoute(app: Express, userController: UserController): void {
 
   useMiddleware(app);
 
+  // root access
+  app.get("/", userController.getRoot);
+
   app.get(
     "/interaction/:uid",
     setNoCache,
