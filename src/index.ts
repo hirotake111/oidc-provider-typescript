@@ -11,7 +11,6 @@ import { addTestUser, useSetting } from "./support/utils";
 import { UserController } from "./controllers/User.controller";
 import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { AuthService } from "./services/authService";
-import { ConfigLoader } from "./support/configLoader";
 import { ConfigLoaderEnv } from "./support/configLoaderEnv";
 import { RedisAdapter } from "./adapters/redisAdapter";
 import { SequelizeOptions } from "sequelize-typescript";
@@ -69,7 +68,6 @@ let server: Server;
   // start HTTP server
   server = app.listen(PORT, () => {
     console.log(`${ISSUER}/.well-known/openid-configuration`);
-    console.log("http://localhost:3001");
   });
 })().catch((err) => {
   if (server && server.listening) server.close();

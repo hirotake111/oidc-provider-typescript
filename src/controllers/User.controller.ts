@@ -255,4 +255,8 @@ export class UserController {
       res.status(500).send("INTERNAL SERVER ERROR");
     }
   };
+
+  getRoot = (_: Request, res: Response) => {
+    res.status(200).send("OK");
+  };
 }
