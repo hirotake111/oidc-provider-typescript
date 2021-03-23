@@ -37,7 +37,7 @@ jobs:
           docker buildx build \
             --push \
             --platform linux/arm/v7,linux/amd64 \
-            -t ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:${{ github.run_number }} .
+            -t ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:1.0.${{ github.run_number }} .
 
       # - name: Build and Publish (without a tag)
       #   if: success()

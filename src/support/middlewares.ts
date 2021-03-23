@@ -4,9 +4,14 @@ import session from "express-session";
 import csrf from "csurf";
 import cookieParser from "cookie-parser";
 import { urlencoded, json } from "express";
+import redis from "redis";
+import connectRedis from "connect-redis";
 
-import { SECRETKEY } from "../config";
+import { SECRETKEY, PROD, REDIS_URL } from "../config";
 import helmet from "helmet";
+
+const redisClient = redis.createClient({ url: REDIS_URL });
+const redisStore = connectRedis(session);
 
 export const csrfProtection = csrf({ cookie: true });
 
@@ -59,11 +64,14 @@ export const useMiddleware = (app: Express) => {
   app.use(
     session({
       secret: SECRETKEY,
+      name: "authSessionId",
+      store: new redisStore({ client: redisClient }),
       resave: false,
       saveUninitialized: false,
       cookie: {
         maxAge: 1000 * 60 * 2, // 2 minutes
         sameSite: "lax",
+        secure: PROD ? true : false,
       },
     })
   );

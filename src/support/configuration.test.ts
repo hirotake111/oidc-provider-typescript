@@ -24,12 +24,6 @@ const context = {
   },
 } as KoaContextWithOIDC;
 
-const clientFactoryMock = (): Promise<ClientMetadata[]> => {
-  return new Promise((resolve, reject) => {
-    resolve(clients);
-  });
-};
-
 class ConfigLoaderMock {
   public getClients = () => clients;
   public getCookies = () => ({ cookie: "mycookie" });
