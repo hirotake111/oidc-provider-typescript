@@ -38,6 +38,7 @@ let server: Server;
 
   // add test user
   if (!PROD) {
+    console.log("Adding test user...");
     await addTestUser();
   }
 
