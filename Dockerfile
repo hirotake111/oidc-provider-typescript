@@ -19,6 +19,9 @@ RUN groupadd -r user && useradd --no-log-init -r -g user user
 # Copy files
 COPY package*.json ./
 COPY --from=builder /app/dist /app/dist
+COPY /src/views /app/dist/views
+COPY /src/public /app/dist/public
+
 # Install modules
 RUN npm install --only=prod
 
