@@ -35,9 +35,11 @@ jobs:
         if: success()
         run: |
           docker buildx build \
-            --push \
+            --output=type=local \
             --platform linux/arm/v7,linux/amd64 \
             -t ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:0.0.${{ github.run_number }} .
+        run: |
+          docker push ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:0.0.${{ github.run_number }}
 
       # - name: Deploy to cluster
       #   uses: steebchen/kubectl@master
