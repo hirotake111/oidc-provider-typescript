@@ -29,10 +29,12 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:0.0.${{ github.run_number }}
+          tags: ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:dev
 
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: |
+          echo IMAGE NAME: ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:dev
+          echo DIGEST: ${{ steps.docker_build.outputs.digest }}
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v1
