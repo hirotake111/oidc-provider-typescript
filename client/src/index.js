@@ -26,7 +26,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 2, // 2 minutes
+      maxAge: 1000 * 60 * 1, // 1 minute
       sameSite: "lax",
     },
   })
@@ -88,6 +88,7 @@ app.set("view engine", "ejs");
         const idTokenClaims = tokenSet.claims();
         // get user info
         const userInfo = await client.userinfo(tokenSet.access_token);
+        console.log("userInfo: ", userInfo);
         // store session
         req.session.username = userInfo.name;
         req.session.userId = userInfo.sub;
