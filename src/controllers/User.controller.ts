@@ -86,7 +86,10 @@ export class UserController {
       }
     } catch (e) {
       // console.error("INTERNAL SERVER ERROR: ", e);
-      return res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
@@ -139,7 +142,10 @@ export class UserController {
         flash: "invalid credentials",
       });
     } catch (e) {
-      return res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
@@ -157,7 +163,10 @@ export class UserController {
 
       return res.status(404).send("NOT FOUND");
     } catch (e) {
-      return res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
@@ -179,7 +188,10 @@ export class UserController {
       await this.provider.interactionFinished(req, res, result, options);
       next();
     } catch (e) {
-      return res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
@@ -203,8 +215,10 @@ export class UserController {
         csrfToken,
       });
     } catch (e) {
-      // console.error("ERROR: ", e);
-      return res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
@@ -252,7 +266,10 @@ export class UserController {
           csrfToken,
         });
       }
-      res.status(500).send("INTERNAL SERVER ERROR");
+      return res.status(500).send({
+        title: "INTERNAL SERVER ERROR",
+        details: e.message,
+      });
     }
   };
 
