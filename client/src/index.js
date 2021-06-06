@@ -6,10 +6,13 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const { Issuer, generators } = require("openid-client");
+const morgan = require("morgan");
+
 assert(process.env.ISSUER, "==== ISSUER is empty ====");
 assert(process.env.PORT, "==== PORT is empty ====");
 assert(process.env.HOSTNAME, "==== HOSTNAME is empty ====");
 assert(process.env.SECRETKEY, "==== SECRETKEY is empty ====");
+
 const ISSUER = process.env.ISSUER;
 const PORT = process.env.PORT;
 const HOSTNAME = process.env.HOSTNAME;
@@ -26,11 +29,12 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 2, // 2 minutes
+      maxAge: 1000 * 60 * 1, // 1 minute
       sameSite: "lax",
     },
   })
 );
+app.use(morgan("common"));
 
 // View settings
 app.set("views", path.join(__dirname, "views"));
@@ -88,6 +92,7 @@ app.set("view engine", "ejs");
         const idTokenClaims = tokenSet.claims();
         // get user info
         const userInfo = await client.userinfo(tokenSet.access_token);
+        console.log("userInfo: ", userInfo);
         // store session
         req.session.username = userInfo.name;
         req.session.userId = userInfo.sub;

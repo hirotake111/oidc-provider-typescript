@@ -19,7 +19,9 @@ docker-compose up -d
 docker-compose down
 ```
 
-### Run Testing client
+### How to run test client?
+
+To do that you can open anothe terminal and run the following command:
 
 ```bash
 cd client && npm start

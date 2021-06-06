@@ -71,6 +71,7 @@ export const configurationFactory = async (
         "updated_at",
         "website",
         "zoneinfo",
+        "display_name",
       ],
     },
     features: {

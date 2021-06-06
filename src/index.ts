@@ -57,11 +57,9 @@ let server: Server;
   // get user controller
   const userController = new UserController(provider, AuthService.authenticate);
 
-  if (PROD) {
-    // Set the following setting if this app has web server in front of itself
-    app.enable("trust proxy");
-    provider.proxy = true;
-  }
+  // Set the following setting if this app has web server in front of itself
+  app.enable("trust proxy");
+  provider.proxy = true;
 
   // Append routes
   useRoute(app, userController);

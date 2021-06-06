@@ -191,7 +191,9 @@ describe("User.controller", () => {
       try {
         await uc.getInteractionWithNoPrompt(req, response, next);
         expect(mockStatus.mock.calls[0][0]).toEqual(500);
-        expect(mockSend.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(mockSend.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
@@ -261,7 +263,9 @@ describe("User.controller", () => {
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(sendMock.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
@@ -307,7 +311,9 @@ describe("User.controller", () => {
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(sendMock.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
@@ -340,7 +346,9 @@ describe("User.controller", () => {
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(sendMock.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
@@ -369,7 +377,9 @@ describe("User.controller", () => {
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(sendMock.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
@@ -443,7 +453,9 @@ describe("User.controller", () => {
         expect(statusMock).toBeCalledTimes(1);
         expect(statusMock.mock.calls[0][0]).toEqual(500);
         expect(sendMock).toBeCalledTimes(1);
-        expect(sendMock.mock.calls[0][0]).toEqual("INTERNAL SERVER ERROR");
+        expect(sendMock.mock.calls[0][0].title).toEqual(
+          "INTERNAL SERVER ERROR"
+        );
       } catch (e) {
         throw e;
       }
