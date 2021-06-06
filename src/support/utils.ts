@@ -2,6 +2,7 @@
 import path from "path";
 import { Express } from "express";
 import express from "express";
+import morgan from "morgan";
 
 import { User } from "../models/User.model";
 
@@ -9,7 +10,8 @@ export const isUUIDv4 = (id?: string): boolean => {
   if (!id) {
     return false;
   }
-  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g;
+  const regex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g;
   const matched = id.match(regex);
   return matched && matched.length === 1 ? true : false;
 };
@@ -23,6 +25,8 @@ export const useSetting = (app: Express) => {
   app.set("view engine", "ejs");
   // static files
   app.use(express.static(path.join(__dirname, "../public")));
+  // logger
+  app.use(morgan("common"));
 };
 
 export const addTestUser = async () => {

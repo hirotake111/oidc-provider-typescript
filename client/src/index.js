@@ -6,10 +6,13 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const { Issuer, generators } = require("openid-client");
+const morgan = require("morgan");
+
 assert(process.env.ISSUER, "==== ISSUER is empty ====");
 assert(process.env.PORT, "==== PORT is empty ====");
 assert(process.env.HOSTNAME, "==== HOSTNAME is empty ====");
 assert(process.env.SECRETKEY, "==== SECRETKEY is empty ====");
+
 const ISSUER = process.env.ISSUER;
 const PORT = process.env.PORT;
 const HOSTNAME = process.env.HOSTNAME;
@@ -31,6 +34,7 @@ app.use(
     },
   })
 );
+app.use(morgan("common"));
 
 // View settings
 app.set("views", path.join(__dirname, "views"));

@@ -13,6 +13,15 @@ interface IRenderProps {
   csrfToken?: string;
 }
 
+interface PostRequestBody {
+  username: string;
+  password: string;
+  password2: string;
+  displayName: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 type asyncAuthMethod = (
   username: string,
   password: string
@@ -140,6 +149,7 @@ export class UserController {
         details,
         title: "Sign-in",
         flash: "invalid credentials",
+        csrfToken,
       });
     } catch (e) {
       return res.status(500).send({
@@ -229,12 +239,27 @@ export class UserController {
   ) => {
     let details: any;
     let client: any;
-    const props = req.body as IcreateUserProps;
+    // get credentials from request body
+    const props = req.body as PostRequestBody;
     try {
       // get details and client information
       details = await this.provider.interactionDetails(req, res);
       client = await this.provider.Client.find(details.params.client_id);
-      // get credentials from request body
+
+      // if two passwords are not identical, back to signup page
+      if (props.password !== props.password2) {
+        details.params.login_hint = props.username;
+        return this.renderPage(res, {
+          view: "signup",
+          client,
+          details,
+          title: "Sign-up",
+          flash: "password is not identical",
+          csrfToken: req.csrfToken(),
+        });
+      }
+
+      // create a new user
       const user = await AuthService.signUp({ ...props });
       if (!user) {
         // something is invalid -> back to singup page
@@ -245,8 +270,10 @@ export class UserController {
           details,
           title: "Sign-up",
           flash: "invalid credentials",
+          csrfToken: req.csrfToken(),
         });
       }
+
       // successfully signed up -> finish interaction
       const result: InteractionResults = { login: { account: user.id } };
       await this.provider.interactionFinished(req, res, result, {
@@ -255,7 +282,6 @@ export class UserController {
     } catch (e) {
       if (e.message === "user already exists") {
         // render signup page again
-        const csrfToken = req.csrfToken();
         details.params.login_hint = props.username;
         return this.renderPage(res, {
           view: "signup",
@@ -263,7 +289,7 @@ export class UserController {
           details,
           title: "Sign-up",
           flash: e.message,
-          csrfToken,
+          csrfToken: req.csrfToken(),
         });
       }
       return res.status(500).send({

@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html >
+<html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>SIGN UP</title>
     <style>
       @import url(https://fonts.googleapis.com/css?family=Roboto:400,100);
       body {
-        font-family: 'Roboto', sans-serif;
+        font-family: "Roboto", sans-serif;
         margin-top: 25px;
         margin-bottom: 25px;
       }
@@ -17,7 +20,7 @@
         padding-top: 0px;
         padding-bottom: 10px;
         width: 274px;
-        background-color: #F7F7F7;
+        background-color: #f7f7f7;
         margin: 0 auto 10px;
         border-radius: 2px;
         box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
@@ -35,13 +38,15 @@
         font-weight: 100;
         text-align: center;
       }
-      .signup-card [type=submit] {
+      .signup-card [type="submit"] {
         width: 100%;
         display: block;
         margin-bottom: 10px;
         position: relative;
       }
-      .signup-card input[type=text], input[type=email], input[type=password] {
+      .signup-card input[type="text"],
+      input[type="email"],
+      input[type="password"] {
         height: 44px;
         font-size: 16px;
         width: 100%;
@@ -57,7 +62,7 @@
       .signup {
         text-align: center;
         font-size: 14px;
-        font-family: 'Arial', sans-serif;
+        font-family: "Arial", sans-serif;
         font-weight: 700;
         height: 36px;
         padding: 0 8px;
@@ -65,7 +70,7 @@
       .signup-submit {
         border: 0px;
         color: #fff;
-        text-shadow: 0 1px rgba(0,0,0,0.1);
+        text-shadow: 0 1px rgba(0, 0, 0, 0.1);
         background-color: #4d90fe;
       }
       .signup-card a {
@@ -88,7 +93,7 @@
         margin-right: auto;
         width: 20%;
       }
-      .signup-card input[type=checkbox] {
+      .signup-card input[type="checkbox"] {
         margin-bottom: 10px;
       }
       .signup-card label {
@@ -99,7 +104,9 @@
         padding-left: 1em;
         list-style-type: circle;
       }
-      li + ul, ul + li, li + li {
+      li + ul,
+      ul + li,
+      li + li {
         padding-top: 0.3em;
       }
       button {
@@ -107,7 +114,7 @@
       }
       button:disabled {
         background-color: #999;
-        cursor:unset;
+        cursor: unset;
       }
       #flash {
         color: rgba(255, 68, 0, 0.808);
@@ -118,26 +125,53 @@
     <div class="signup-card">
       <h1><%= title %></h1>
       <!-- flash message -->
-      <% if (flash) { %>
-        <p id="flash"><%= flash %></p>
-      <% } %>
+      <p id="flash"><%= flash %></p>
       <!-- form -->
-      <form autocomplete="off" action="/interaction/<%= uid %>/signup" method="POST" >
-        <input required id="username" type="text" name="username" value="user" placeholder="NEW USERNAME">
-        <input required id="displayName" type="text" name="displayName" value="test user" placeholder="DISPLAY NAME">
-        <input required id="password" type="password" name="password" value="password" placeholder="PASSWORD">
-        <input required id="password2" type="password" name="password2" value="password" placeholder="CONFIRM PASSWORD">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button type="submit" id="signup-button" class="signup signup-submit">Sign-up</button>
+      <form
+        autocomplete="off"
+        action="/interaction/<%= uid %>/signup"
+        method="POST"
+      >
+        <input
+          required
+          id="username"
+          type="text"
+          name="username"
+          placeholder="NEW USERNAME"
+        />
+        <input
+          required
+          id="displayName"
+          type="text"
+          name="displayName"
+          placeholder="DISPLAY NAME"
+        />
+        <input
+          required
+          id="password"
+          type="password"
+          name="password"
+          placeholder="PASSWORD"
+        />
+        <input
+          required
+          id="password2"
+          type="password"
+          name="password2"
+          placeholder="CONFIRM PASSWORD"
+        />
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" id="signup-button" class="signup signup-submit">
+          Sign-up
+        </button>
       </form>
 
       <div class="signup-help">
         <a href="/interaction/<%= uid %>">[ Back to login page ]</a>
         <% if (client.tosUri) { %>
-          <a href="<%= client.tosUri %>">[ Terms of Service ]</a>
-        <% } %>
-        <% if (client.policyUri) { %>
-          <a href="<%= client.policyUri %>">[ Privacy Policy ]</a>
+        <a href="<%= client.tosUri %>">[ Terms of Service ]</a>
+        <% } %> <% if (client.policyUri) { %>
+        <a href="<%= client.policyUri %>">[ Privacy Policy ]</a>
         <% } %>
       </div>
     </div>
