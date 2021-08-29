@@ -2,28 +2,27 @@ import { Server } from "http";
 
 import express from "express";
 
-import { configurationFactory } from "./support/configuration";
-import { DATABASE_URI, ISSUER, PORT, PROD } from "./config";
+import { getConfig } from "./config";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
 import { dbFactory } from "./support/dbFactory";
 import { addTestUser, useSetting } from "./support/utils";
-import { UserController } from "./controllers/User.controller";
-import { oidcProviderFactory } from "./support/oidcProviderFactory";
-import { AuthService } from "./services/authService";
-import { ConfigLoaderEnv } from "./support/configLoaderEnv";
-import { RedisAdapter } from "./adapters/redisAdapter";
+import { getAuthService } from "./services/authService";
 import { SequelizeOptions } from "sequelize-typescript";
+import { getController } from "./controllers/controllers";
 
 let server: Server;
 (async () => {
   const app = express();
 
+  // get congig
+  const config = await getConfig();
+
   // setting configuration
   useSetting(app);
 
   // connect to database
-  const options: SequelizeOptions = PROD
+  const options: SequelizeOptions = config.PROD
     ? {
         logging: false,
         dialectOptions: {
@@ -34,39 +33,29 @@ let server: Server;
         },
       }
     : { logging: false };
-  await dbFactory(DATABASE_URI, [User], options);
+  await dbFactory(config.DATABASE_URI, [User], options);
 
   // add test user
-  if (!PROD) {
+  if (!config.PROD) {
     console.log("Adding test user...");
     await addTestUser();
   }
 
-  // generate configuration
-  const configuration = await configurationFactory(new ConfigLoaderEnv());
+  // get AuthService
+  const AuthService = getAuthService(config);
 
-  // get OIDC provider
-  const provider = oidcProviderFactory(
-    ISSUER,
-    configuration,
-    // undefined,
-    RedisAdapter,
-    AuthService.findAccount
-  );
-
-  // get user controller
-  const userController = new UserController(provider, AuthService.authenticate);
+  // get controller
+  const controller = getController(config, AuthService);
 
   // Set the following setting if this app has web server in front of itself
   app.enable("trust proxy");
-  provider.proxy = true;
 
   // Append routes
-  useRoute(app, userController);
+  useRoute(app, controller, config);
 
   // start HTTP server
-  server = app.listen(PORT, () => {
-    console.log(`${ISSUER}/.well-known/openid-configuration`);
+  server = app.listen(config.PORT, () => {
+    console.log(`${config.ISSUER}/.well-known/openid-configuration`);
   });
 })().catch((err) => {
   if (server && server.listening) server.close();

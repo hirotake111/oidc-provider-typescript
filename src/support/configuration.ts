@@ -13,7 +13,6 @@ import {
   interactionPolicy,
 } from "oidc-provider";
 import { IConfigLoader } from "../types";
-import { ConfigLoader } from "./configLoader";
 
 // copies the default policy, already has login and consent prompt policies
 const interactions = interactionPolicy.base(); // policy();
@@ -26,13 +25,6 @@ const selectAccount = new interactionPolicy.Prompt({
 
 // add to index 0, order goes select_account > login > consent
 interactions.add(selectAccount, 0);
-
-interface IClientType {
-  client_id: string;
-  client_secret: string;
-  grant_types: string[];
-  redirect_uris: string[];
-}
 
 export type ClientFactory = () => Promise<ClientMetadata[]>;
 

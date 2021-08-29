@@ -6,52 +6,58 @@ import {
   redirectToHTTPS,
   useMiddleware,
 } from "./support/middlewares";
-import { UserController } from "./controllers/User.controller";
-import { PROD } from "./config";
+import { ConfigType } from "./config";
+import { Controller } from "./controllers/controllers";
 
-export function useRoute(app: Express, userController: UserController): void {
-  if (PROD) {
-    // if HTTP redirect to HTTPS
-    app.use(redirectToHTTPS);
-  }
+export function useRoute(
+  app: Express,
+  controller: Controller,
+  config: ConfigType
+): void {
+  // if production environment all HTTP request should be redirected to HTTPS
+  if (config.PROD) app.use(redirectToHTTPS);
 
-  useMiddleware(app);
+  useMiddleware(app, config);
 
   // root access
-  app.get("/", userController.getRoot);
+  app.get("/", controller.user.getRoot);
 
   app.get(
     "/interaction/:uid",
     setNoCache,
     csrfProtection,
-    userController.getInteractionWithNoPrompt
+    controller.user.getInteractionWithNoPrompt
   );
 
   app.post(
     "/interaction/:uid/login",
     csrfProtection,
-    userController.postInteractionLogin
+    controller.user.postInteractionLogin
   );
 
-  app.get("/interaction/:uid/abort", userController.getInteractionAbort);
+  app.get("/interaction/:uid/abort", controller.user.getInteractionAbort);
 
   app.post(
     "/interaction/:uid/confirm",
     setNoCache,
-    userController.postInteractionConfirm
+    controller.user.postInteractionConfirm
   );
 
   app.get(
     "/interaction/:uid/signup",
     csrfProtection,
-    userController.getInteractionSignup
+    config.USER_CREATION_ALLOWED
+      ? controller.user.getInteractionSignup
+      : controller.common.notAllowed
   );
   app.post(
     "/interaction/:uid/signup",
     csrfProtection,
-    userController.postInteractionSignup
+    config.USER_CREATION_ALLOWED
+      ? controller.user.postInteractionSignup
+      : controller.common.notAllowed
   );
 
   // OIDC provider callbacks
-  app.use(userController.oidcCallback);
+  app.use(controller.user.oidcCallback);
 }

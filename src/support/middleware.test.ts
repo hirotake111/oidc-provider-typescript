@@ -109,13 +109,21 @@ describe("middlewares", () => {
   });
 
   describe("useMiddleware() function", () => {
+    let config: any;
+    beforeEach(() => {
+      config = {
+        SECRETKET: "secret",
+        REDIS_CLIENT: {},
+        RROD: true,
+      };
+    });
     test("It should call app.use 5 times", () => {
       expect.assertions(1);
       const app = {} as Express;
       app.use = jest.fn();
       const useMock = app.use as jest.Mock;
       try {
-        useMiddleware(app);
+        useMiddleware(app, config);
         expect(useMock).toHaveBeenCalledTimes(5);
       } catch (e) {
         throw e;
