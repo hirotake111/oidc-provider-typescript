@@ -2,7 +2,8 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, Response } from "express";
 import Provider, { InteractionResults } from "oidc-provider";
-import { AuthService, IcreateUserProps } from "../services/authService";
+import { AuthServiceConstructor } from "../services/authService";
+// import { AuthService } from "../services/authService";
 
 interface IRenderProps {
   view: string;
@@ -29,11 +30,12 @@ type asyncAuthMethod = (
 
 export class UserController {
   private provider: Provider;
-  private authenticate: asyncAuthMethod;
+  // private authenticate: asyncAuthMethod;
+  private authService: AuthServiceConstructor;
 
-  constructor(provider: Provider, authenticate: asyncAuthMethod) {
+  constructor(provider: Provider, AuthService: AuthServiceConstructor) {
     this.provider = provider;
-    this.authenticate = authenticate;
+    this.authService = AuthService;
   }
 
   public renderPage = (res: Response, props: IRenderProps) => {
@@ -133,7 +135,7 @@ export class UserController {
           csrfToken,
         });
       }
-      const accountId = await this.authenticate(username, password);
+      const accountId = await this.authService.authenticate(username, password);
       if (accountId) {
         // successfully signed in -> finish interaction
         const result: InteractionResults = { login: { account: accountId } };
@@ -260,7 +262,7 @@ export class UserController {
       }
 
       // create a new user
-      const user = await AuthService.signUp({ ...props });
+      const user = await this.authService.signUp({ ...props });
       if (!user) {
         // something is invalid -> back to singup page
         details.params.login_hint = props.username;

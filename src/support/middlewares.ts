@@ -7,10 +7,10 @@ import { urlencoded, json } from "express";
 import redis from "redis";
 import connectRedis from "connect-redis";
 
-import { SECRETKEY, PROD, REDIS_URL } from "../config";
+import { config, ConfigType } from "../config";
 import helmet from "helmet";
 
-const redisClient = redis.createClient({ url: REDIS_URL });
+const redisClient = redis.createClient({ url: config.REDIS_URL });
 const redisStore = connectRedis(session);
 
 export const csrfProtection = csrf({ cookie: true });
@@ -54,7 +54,7 @@ export const redirectToHTTPS = (
   }
 };
 
-export const useMiddleware = (app: Express) => {
+export const useMiddleware = (app: Express, config: ConfigType) => {
   // body-parser
   app.use(urlencoded({ extended: false }));
   app.use(json());
@@ -63,15 +63,15 @@ export const useMiddleware = (app: Express) => {
   // session
   app.use(
     session({
-      secret: SECRETKEY,
+      secret: config.SECRETKEY,
       name: "authSessionId",
       store: new redisStore({ client: redisClient }),
       resave: false,
       saveUninitialized: false,
       cookie: {
-        maxAge: 1000 * 60 * 2, // 2 minutes
+        maxAge: 1000 * 60 * 1, // 1 minute(s)
         sameSite: "lax",
-        secure: PROD ? true : false,
+        secure: config.PROD ? true : false,
       },
     })
   );

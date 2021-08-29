@@ -22,6 +22,7 @@ services:
       - "NODE_ENV=development"
       - "ISSUER=http://localhost:3000"
       - "REDIS_URL=redis://redis:6379"
+      - "USER_CREATION_ALLOWED=true"
   db: # PostgreSQL
     image: postgres:13.2
     environment:

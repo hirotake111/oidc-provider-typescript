@@ -10,6 +10,17 @@ npm run builddev
 npm run buildprod
 ```
 
+### Required environment variables
+
+- SECRETKEY - secret key for app
+- OIDCCONFIGURATION - OIDC server configuration
+- JWKS - JSON Web key Set
+- DATABASE_URI - URI for Database
+- NODE_ENV - for production environment, set "production"
+- ISSUER - URL for OIDC server itself
+- REDIS_URL - URL for redis server
+- USER_CREATION_ALLOWED - set any value if you want to allow user to create an account
+
 ### Run docker container
 
 ```bash

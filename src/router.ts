@@ -7,15 +7,19 @@ import {
   useMiddleware,
 } from "./support/middlewares";
 import { UserController } from "./controllers/User.controller";
-import { PROD } from "./config";
+import { ConfigType } from "./config";
 
-export function useRoute(app: Express, userController: UserController): void {
-  if (PROD) {
+export function useRoute(
+  app: Express,
+  userController: UserController,
+  config: ConfigType
+): void {
+  if (config.PROD) {
     // if HTTP redirect to HTTPS
     app.use(redirectToHTTPS);
   }
 
-  useMiddleware(app);
+  useMiddleware(app, config);
 
   // root access
   app.get("/", userController.getRoot);
