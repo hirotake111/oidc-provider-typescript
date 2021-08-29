@@ -24,13 +24,15 @@ const PROD = process.env.NODE_ENV === "production";
 const ROUNDS = getRounds(process.env.ROUNDS); // used for password hashing
 const SECRETKEY = process.env.SECRETKEY || "supersecret";
 const USER_CREATION_ALLOWED = !!process.env.USER_CREATION_ALLOWED;
-const OIDCCONFIGURATION = JSON.parse(
-  process.env.OIDCCONFIGURATION || "{}"
-) as IConfigLoaderDataType;
-const JWKS = JSON.parse(process.env.JWKS || "{}") as JSONWebKeySet;
 
 export const getConfig = async (): Promise<ConfigType> => {
   console.log(`user creation allowed: ${USER_CREATION_ALLOWED}`);
+  console.log("JWKS:", process.env.JWKS);
+  console.log("parsed: ", JSON.parse(process.env.JWKS || "{}"));
+  const OIDCCONFIGURATION = JSON.parse(
+    process.env.OIDCCONFIGURATION || "{}"
+  ) as IConfigLoaderDataType;
+  const JWKS = JSON.parse(process.env.JWKS || "{}") as JSONWebKeySet;
   try {
     const configuration = await configurationFactory(
       ConfigLoaderEnv(OIDCCONFIGURATION, JWKS)

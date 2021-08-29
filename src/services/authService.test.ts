@@ -2,10 +2,11 @@ import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import bcrypt from "bcrypt";
 
-import { AuthService } from "./authService";
+import { AuthServiceConstructor, getAuthService } from "./authService";
 import { User } from "../models/User.model";
-import { ROUNDS } from "../config";
+import { getRounds } from "../config";
 import { KoaContextWithOIDC } from "oidc-provider";
+import { config } from "dotenv/types";
 
 const createUser = (len: number = 10) => ({
   id: uuid(),
@@ -18,6 +19,12 @@ const createUser = (len: number = 10) => ({
 
 describe("AuthService", () => {
   describe("signUp() method", () => {
+    let config: any;
+    let AuthService: AuthServiceConstructor;
+    beforeEach(() => {
+      config = { ROUNDS: 4 };
+      AuthService = getAuthService(config);
+    });
     test("It should create a new user", async () => {
       expect.assertions(5);
       try {
@@ -65,6 +72,14 @@ describe("AuthService", () => {
   });
 
   describe(".authenticate() method", () => {
+    let config: any;
+    let AuthService: AuthServiceConstructor;
+    const ROUNDS = getRounds("5");
+    beforeEach(() => {
+      config = { ROUDNS: 4 };
+      AuthService = getAuthService(config);
+    });
+
     test("It should return id", async () => {
       try {
         expect.assertions(1);
@@ -120,6 +135,13 @@ describe("AuthService", () => {
   });
 
   describe(".findAccount() method", () => {
+    let config: any;
+    let AuthService: AuthServiceConstructor;
+    beforeEach(() => {
+      config = { ROUNDS: 4 };
+      AuthService = getAuthService(config);
+    });
+
     test("It should return Promise<Account | undefined>", async () => {
       expect.assertions(3);
       try {
