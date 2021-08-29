@@ -1,5 +1,3 @@
-// npm i ioredis@^4.0.0
-import Redis from "ioredis";
 import { Adapter, AdapterPayload } from "oidc-provider";
 import { ConfigType } from "../config";
 
@@ -35,7 +33,7 @@ function uidKeyFor(uid: string) {
 }
 
 export const getRedisAdapter = (config: ConfigType) => {
-  const client = new Redis(config.REDIS_URL, { keyPrefix: "oidc:" });
+  const client = config.IOREDIS_CLIENT;
   return class RedisAdapter implements Adapter {
     private name: string;
 

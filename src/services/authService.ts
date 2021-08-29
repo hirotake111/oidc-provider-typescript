@@ -8,7 +8,7 @@ import {
 } from "oidc-provider";
 
 import { User } from "../models/User.model";
-import { config, ConfigType } from "../config";
+import { ConfigType } from "../config";
 import { isUUIDv4 } from "../support/utils";
 
 export interface IcreateUserProps {

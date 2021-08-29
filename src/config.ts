@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { getIORedisClient, getRedisClient } from "./support/getRedisClient";
 dotenv.config();
 
 export const getRounds = (env: string | undefined) => {
@@ -17,7 +18,8 @@ const USER_CREATION_ALLOWED = !!process.env.USER_CREATION_ALLOWED;
 
 const defaultConfig = {
   DATABASE_URI: "NODATABASECONNECTIONSTRING",
-  REDIS_URL: "NOREDISURL",
+  REDIS_CLIENT: undefined,
+  IOREDIS_CLIENT: undefined,
   ISSUER: "NOISSUER",
   PORT: 3000,
   PROD: false,
@@ -29,7 +31,8 @@ const defaultConfig = {
 export const config = {
   ...defaultConfig,
   DATABASE_URI,
-  REDIS_URL,
+  REDIS_CLIENT: getRedisClient(REDIS_URL),
+  IOREDIS_CLIENT: getIORedisClient(REDIS_URL, "iodc:"),
   ISSUER,
   PORT,
   PROD,
