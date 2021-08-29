@@ -1,4 +1,4 @@
-import { UserController } from "./User.controller";
+import { getUserController, UserController } from "./User.controller";
 import { CommonController, getCommonController } from "./common.Controller";
 import { ConfigType } from "../config";
 import { AuthServiceConstructor } from "../services/authService";
@@ -9,7 +9,7 @@ export const getController = (
   authService: AuthServiceConstructor
 ) => {
   return {
-    user: new UserController(config, authService),
+    user: getUserController(config, authService),
     common: getCommonController(),
   };
 };

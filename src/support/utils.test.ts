@@ -21,28 +21,17 @@ describe("Test utils.ts", () => {
   });
 
   describe("useSetting()", () => {
-    it("should set keys and values", () => {
-      expect.assertions(2);
-      const app = {
-        set: jest.fn(),
-        use: jest.fn(),
-      };
-      useSetting(app as any);
-      expect(app.set).toHaveBeenCalledTimes(3);
-      expect(app.use).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("addTestuser", () => {
-    it("should add test user to db", async () => {
-      expect.assertions(2);
-      try {
-        await addTestUser();
-        expect(User.create).toHaveBeenCalledTimes(1);
-        expect(User.destroy).toHaveBeenCalledTimes(1);
-      } catch (e) {
-        throw e;
-      }
+    describe("addTestuser", () => {
+      it("should add test user to db", async () => {
+        expect.assertions(2);
+        try {
+          await addTestUser();
+          expect(User.create).toHaveBeenCalledTimes(1);
+          expect(User.destroy).toHaveBeenCalledTimes(1);
+        } catch (e) {
+          throw e;
+        }
+      });
     });
   });
 });

@@ -6,7 +6,6 @@ import { AuthServiceConstructor, getAuthService } from "./authService";
 import { User } from "../models/User.model";
 import { getRounds } from "../config";
 import { KoaContextWithOIDC } from "oidc-provider";
-import { config } from "dotenv/types";
 
 const createUser = (len: number = 10) => ({
   id: uuid(),

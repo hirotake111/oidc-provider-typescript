@@ -19,16 +19,14 @@ export const getRounds = (env: string | undefined) => {
 const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
 const REDIS_URL = process.env.REDIS_URL || "NOREDISURL";
 const ISSUER = process.env.ISSUER || "NOISSUER";
-const PORT = parseInt(process.env.PORT || "3000"); // Port number
+const PORT = parseInt(process.env.PORT || "3000", 10); // Port number
 const PROD = process.env.NODE_ENV === "production";
 const ROUNDS = getRounds(process.env.ROUNDS); // used for password hashing
 const SECRETKEY = process.env.SECRETKEY || "supersecret";
 const USER_CREATION_ALLOWED = !!process.env.USER_CREATION_ALLOWED;
 
 export const getConfig = async (): Promise<ConfigType> => {
-  console.log(`user creation allowed: ${USER_CREATION_ALLOWED}`);
-  console.log("JWKS:", process.env.JWKS);
-  console.log("parsed: ", JSON.parse(process.env.JWKS || "{}"));
+  console.log("USER_CREATION_ALLOWED,", USER_CREATION_ALLOWED);
   const OIDCCONFIGURATION = JSON.parse(
     process.env.OIDCCONFIGURATION || "{}"
   ) as IConfigLoaderDataType;
