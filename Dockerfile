@@ -7,7 +7,7 @@ WORKDIR /app
 COPY *.json ./
 # Install dev modules
 # RUN npm install --also=dev
-RUN npm install
+RUN npm install --no-optional
 # Copy and compile files
 COPY src ./src
 RUN npm run build
@@ -23,7 +23,7 @@ COPY /src/views /app/dist/views
 COPY /src/public /app/dist/public
 
 # Install modules
-RUN npm install --only=prod
+RUN npm install --only=prod --no-optional
 
 USER user
 EXPOSE 3000

@@ -2,22 +2,21 @@ import { Server } from "http";
 
 import express from "express";
 
-import { configurationFactory } from "./support/configuration";
-import { config } from "./config";
+import { getConfig } from "./config";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
 import { dbFactory } from "./support/dbFactory";
 import { addTestUser, useSetting } from "./support/utils";
-import { UserController } from "./controllers/User.controller";
-import { oidcProviderFactory } from "./support/oidcProviderFactory";
 import { getAuthService } from "./services/authService";
-import { ConfigLoaderEnv } from "./support/configLoaderEnv";
-import { getRedisAdapter } from "./adapters/redisAdapter";
 import { SequelizeOptions } from "sequelize-typescript";
+import { getController } from "./controllers/controllers";
 
 let server: Server;
 (async () => {
   const app = express();
+
+  // get congig
+  const config = await getConfig();
 
   // setting configuration
   useSetting(app);
@@ -42,33 +41,17 @@ let server: Server;
     await addTestUser();
   }
 
-  // generate configuration
-  const configuration = await configurationFactory(new ConfigLoaderEnv());
-
-  // get Redis adaptor
-  const RedisAdapter = getRedisAdapter(config);
-
-  // gget AuthService
+  // get AuthService
   const AuthService = getAuthService(config);
 
-  // get OIDC provider
-  const provider = oidcProviderFactory(
-    config.ISSUER,
-    configuration,
-    // undefined,
-    RedisAdapter,
-    AuthService.findAccount
-  );
-
-  // get user controller
-  const userController = new UserController(provider, AuthService);
+  // get controller
+  const controller = getController(config, AuthService);
 
   // Set the following setting if this app has web server in front of itself
   app.enable("trust proxy");
-  provider.proxy = true;
 
   // Append routes
-  useRoute(app, userController, config);
+  useRoute(app, controller, config);
 
   // start HTTP server
   server = app.listen(config.PORT, () => {

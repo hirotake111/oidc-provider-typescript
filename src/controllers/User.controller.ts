@@ -1,8 +1,10 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, Response } from "express";
-import Provider, { InteractionResults } from "oidc-provider";
+import Provider, { FindAccount, InteractionResults } from "oidc-provider";
 import { AuthServiceConstructor } from "../services/authService";
+import { ConfigType } from "../config";
+import { config } from "dotenv/types";
 // import { AuthService } from "../services/authService";
 
 interface IRenderProps {
@@ -12,6 +14,7 @@ interface IRenderProps {
   title: string;
   flash?: string;
   csrfToken?: string;
+  signupAllowed?: boolean;
 }
 
 interface PostRequestBody {
@@ -23,23 +26,23 @@ interface PostRequestBody {
   lastName?: string;
 }
 
-type asyncAuthMethod = (
-  username: string,
-  password: string
-) => Promise<string | null>;
-
 export class UserController {
   private provider: Provider;
   // private authenticate: asyncAuthMethod;
   private authService: AuthServiceConstructor;
+  private signupAllowed: boolean;
 
-  constructor(provider: Provider, AuthService: AuthServiceConstructor) {
-    this.provider = provider;
+  constructor(config: ConfigType, AuthService: AuthServiceConstructor) {
+    this.provider = config.getProvider(AuthService.findAccount);
     this.authService = AuthService;
+    this.signupAllowed = config.USER_CREATION_ALLOWED;
+    // set proxy
+    config.provider = this.provider;
+    config.provider.proxy = true;
   }
 
   public renderPage = (res: Response, props: IRenderProps) => {
-    const { view, client, details, title, flash } = props;
+    const { view, client, details, title, flash, signupAllowed } = props;
     res.render(view, {
       client,
       uid: details.uid,
@@ -50,6 +53,7 @@ export class UserController {
       session: details.session ? details.session : undefined,
       csrfToken: props.csrfToken,
       dbg: { params: details.params, prompt: details.prompt },
+      signupAllowed,
     });
   };
 
@@ -77,6 +81,7 @@ export class UserController {
             details,
             title: "Sign-in",
             csrfToken,
+            signupAllowed: this.signupAllowed,
           });
         }
 
@@ -133,6 +138,7 @@ export class UserController {
           title: "Sign-in",
           flash: "invalid credentials",
           csrfToken,
+          signupAllowed: this.signupAllowed,
         });
       }
       const accountId = await this.authService.authenticate(username, password);
@@ -152,6 +158,7 @@ export class UserController {
         title: "Sign-in",
         flash: "invalid credentials",
         csrfToken,
+        signupAllowed: this.signupAllowed,
       });
     } catch (e) {
       return res.status(500).send({
