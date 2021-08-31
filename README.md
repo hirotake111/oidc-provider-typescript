@@ -12,6 +12,10 @@ docker build -t $IMAGE_NAME .
 
 # Image for production (multi platform)
 npm run buildprod
+
+# build docker image for a sample client
+cd client
+docker build -t auth_sample_client .
 ```
 
 ### Required environment variables
@@ -25,7 +29,7 @@ npm run buildprod
 - REDIS_URL - URL for redis server
 - USER_CREATION_ALLOWED - set any value if you want to allow user to create an account
 
-### Run docker container
+### Run docker containers
 
 ```bash
 # Start containers
