@@ -4,17 +4,8 @@ import { NextFunction, Request, RequestHandler, Response } from "express";
 import Provider, { FindAccount, InteractionResults } from "oidc-provider";
 import { AuthServiceConstructor } from "../services/authService";
 import { ConfigType } from "../config";
+import { renderPage } from "../utils/utils";
 // import { AuthService } from "../services/authService";
-
-interface IRenderProps {
-  view: string;
-  client: any;
-  details: any;
-  title: string;
-  flash?: string;
-  csrfToken?: string;
-  signupAllowed?: boolean;
-}
 
 interface PostRequestBody {
   username: string;
@@ -35,22 +26,6 @@ export interface UserController {
   postInteractionSignup: RequestHandler;
   getRoot: RequestHandler;
 }
-
-export const renderPage = (res: Response, props: IRenderProps) => {
-  const { view, client, details, title, flash, signupAllowed } = props;
-  res.render(view, {
-    client,
-    uid: details.uid,
-    params: details.params,
-    details: details.prompt.details,
-    flash,
-    title,
-    session: details.session ? details.session : undefined,
-    csrfToken: props.csrfToken,
-    dbg: { params: details.params, prompt: details.prompt },
-    signupAllowed,
-  });
-};
 
 export const getUserController = (
   config: ConfigType,

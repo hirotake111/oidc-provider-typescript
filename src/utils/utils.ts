@@ -1,10 +1,11 @@
 /** utility functions */
 import path from "path";
-import { Express } from "express";
+import { Express, Response } from "express";
 import express from "express";
 import morgan from "morgan";
 
 import { User } from "../models/User.model";
+import { InteractionResults } from "oidc-provider";
 
 export const isUUIDv4 = (id?: string): boolean => {
   if (!id) {
@@ -38,5 +39,31 @@ export const addTestUser = async () => {
     displayName: "Test User",
     createdAt: new Date(),
     updatedAt: new Date(),
+  });
+};
+
+export interface IRenderProps {
+  view: string;
+  client: any;
+  details: InteractionResults;
+  title: string;
+  flash?: string;
+  csrfToken?: string;
+  signupAllowed?: boolean;
+}
+
+export const renderPage = (res: Response, props: IRenderProps) => {
+  const { view, client, details, title, flash, signupAllowed } = props;
+  res.render(view, {
+    client,
+    uid: details.uid,
+    params: details.params,
+    details: details.prompt.details,
+    flash,
+    title,
+    session: details.session ? details.session : undefined,
+    csrfToken: props.csrfToken,
+    dbg: { params: details.params, prompt: details.prompt },
+    signupAllowed,
   });
 };

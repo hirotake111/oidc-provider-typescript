@@ -9,7 +9,7 @@ import {
 
 import { User } from "../models/User.model";
 import { ConfigType } from "../config";
-import { isUUIDv4 } from "../support/utils";
+import { isUUIDv4 } from "../utils/utils";
 
 export interface IcreateUserProps {
   username: string;

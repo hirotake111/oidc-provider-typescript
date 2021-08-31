@@ -6,7 +6,7 @@ import { getConfig } from "./config";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
 import { dbFactory } from "./support/dbFactory";
-import { addTestUser, useSetting } from "./support/utils";
+import { addTestUser, useSetting } from "./utils/utils";
 import { getAuthService } from "./services/authService";
 import { SequelizeOptions } from "sequelize-typescript";
 import { getController } from "./controllers/controllers";
