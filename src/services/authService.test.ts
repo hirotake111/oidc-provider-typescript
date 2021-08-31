@@ -2,9 +2,9 @@ import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import bcrypt from "bcrypt";
 
-import { AuthServiceConstructor, getAuthService } from "./authService";
-import { User } from "../models/User.model";
-import { getRounds } from "../config";
+import { AuthService, getAuthService } from "./authService";
+import { ICreateUserProps, User } from "../models/User.model";
+import { ConfigType, getRounds } from "../config";
 import { KoaContextWithOIDC } from "oidc-provider";
 
 const createUser = (len: number = 10) => ({
@@ -19,10 +19,10 @@ const createUser = (len: number = 10) => ({
 describe("AuthService", () => {
   describe("signUp() method", () => {
     let config: any;
-    let AuthService: AuthServiceConstructor;
+    let authService: AuthService;
     beforeEach(() => {
       config = { ROUNDS: 4 };
-      AuthService = getAuthService(config);
+      authService = getAuthService(config);
     });
     test("It should create a new user", async () => {
       expect.assertions(5);
@@ -30,7 +30,7 @@ describe("AuthService", () => {
         const user = createUser();
         User.findOne = jest.fn().mockReturnValueOnce(null);
         User.create = jest.fn().mockReturnValue(user);
-        const created = await AuthService.signUp(user);
+        const created = await authService.signUp(user);
         expect(created.id).toEqual(user.id);
         expect(created.username).toEqual(user.username);
         expect(created.displayName).toEqual(user.displayName);
@@ -46,13 +46,13 @@ describe("AuthService", () => {
       const user = createUser(21);
       User.findOne = jest.fn().mockReturnValueOnce(null);
       try {
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
         expect(e.message).toEqual("password is too long or too short");
       }
       try {
         user.password = nanoid(7);
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
         expect(e.message).toEqual("password is too long or too short");
       }
@@ -63,7 +63,7 @@ describe("AuthService", () => {
       const user = createUser();
       User.findOne = jest.fn().mockReturnValueOnce(user);
       try {
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
         expect(e.message).toEqual("user already exists");
       }
@@ -72,11 +72,11 @@ describe("AuthService", () => {
 
   describe(".authenticate() method", () => {
     let config: any;
-    let AuthService: AuthServiceConstructor;
+    let authService: AuthService;
     const ROUNDS = getRounds("5");
     beforeEach(() => {
       config = { ROUDNS: 4 };
-      AuthService = getAuthService(config);
+      authService = getAuthService(config);
     });
 
     test("It should return id", async () => {
@@ -90,7 +90,7 @@ describe("AuthService", () => {
           password: await bcrypt.hash(plainPassword, ROUNDS),
         };
         User.findOne = jest.fn().mockReturnValueOnce(user);
-        const isAuthenticated = await AuthService.authenticate(
+        const isAuthenticated = await authService.authenticate(
           user.username,
           plainPassword
         );
@@ -111,10 +111,10 @@ describe("AuthService", () => {
           password: await bcrypt.hash("otherpassword", ROUNDS),
         };
         User.findOne = jest.fn().mockReturnValueOnce(user);
-        expect(await AuthService.authenticate(username, plainPassword)).toEqual(
+        expect(await authService.authenticate(username, plainPassword)).toEqual(
           null
         );
-        expect(await AuthService.authenticate("Megan", "mypassword")).toEqual(
+        expect(await authService.authenticate("Megan", "mypassword")).toEqual(
           null
         );
       } catch (e) {
@@ -126,7 +126,7 @@ describe("AuthService", () => {
       try {
         expect.assertions(1);
         User.findOne = jest.fn().mockRejectedValue(new Error("Database Error"));
-        await AuthService.authenticate("Adele", "adelespassword");
+        await authService.authenticate("Adele", "adelespassword");
       } catch (e) {
         expect(e.message).toEqual("Database Error");
       }
@@ -135,10 +135,10 @@ describe("AuthService", () => {
 
   describe(".findAccount() method", () => {
     let config: any;
-    let AuthService: AuthServiceConstructor;
+    let authService: AuthService;
     beforeEach(() => {
       config = { ROUNDS: 4 };
-      AuthService = getAuthService(config);
+      authService = getAuthService(config);
     });
 
     test("It should return Promise<Account | undefined>", async () => {
@@ -146,7 +146,7 @@ describe("AuthService", () => {
       try {
         const user = createUser();
         User.findOne = jest.fn().mockReturnValue(user);
-        const account = await AuthService.findAccount(
+        const account = await authService.findAccount(
           {} as KoaContextWithOIDC,
           user.id
         );
@@ -167,7 +167,7 @@ describe("AuthService", () => {
       expect.assertions(1);
       try {
         User.findOne = jest.fn().mockReturnValue(null);
-        const account = await AuthService.findAccount(
+        const account = await authService.findAccount(
           {} as KoaContextWithOIDC,
           uuid()
         );
@@ -183,7 +183,7 @@ describe("AuthService", () => {
         const user = createUser();
         user.id = "userId";
         User.findOne = jest.fn().mockReturnValue(user);
-        const account = await AuthService.findAccount(
+        const account = await authService.findAccount(
           {} as KoaContextWithOIDC,
           user.id
         );
@@ -196,9 +196,33 @@ describe("AuthService", () => {
       expect.assertions(1);
       try {
         User.findOne = jest.fn().mockRejectedValue(new Error("Database Error"));
-        await AuthService.findAccount({} as KoaContextWithOIDC, uuid());
+        await authService.findAccount({} as KoaContextWithOIDC, uuid());
       } catch (e) {
         expect(e.message).toEqual("Database Error");
+      }
+    });
+  });
+
+  describe("createuser() method", () => {
+    let props: ICreateUserProps;
+    let config: ConfigType;
+
+    beforeEach(() => {
+      props = {
+        username: nanoid(),
+        password: nanoid(),
+        displayName: nanoid(),
+      };
+      config = { ROUNDS: 5 } as any;
+    });
+
+    it("should create user", async () => {
+      expect.assertions(1);
+      try {
+        const auth = getAuthService(config);
+        expect(typeof (await auth.createUser(props))).toEqual("string");
+      } catch (e) {
+        throw e;
       }
     });
   });

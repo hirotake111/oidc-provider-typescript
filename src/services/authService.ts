@@ -7,17 +7,9 @@ import {
   ClaimsParameterMember,
 } from "oidc-provider";
 
-import { User } from "../models/User.model";
+import { ICreateUserProps, User } from "../models/User.model";
 import { ConfigType } from "../config";
 import { isUUIDv4 } from "../utils/utils";
-
-export interface IcreateUserProps {
-  username: string;
-  password: string;
-  displayName: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 interface ISignUpReturnType {
   id: string;
@@ -27,23 +19,21 @@ interface ISignUpReturnType {
   lastName?: string;
 }
 
-export interface AuthServiceConstructor {
-  // signUp: (props: IcreateUserProps) => Promise<ISignUpReturnType>;
-  signUp(props: IcreateUserProps): Promise<ISignUpReturnType>;
+export interface AuthService {
+  signUp(props: ICreateUserProps): Promise<ISignUpReturnType>;
   authenticate: (username: string, password: string) => Promise<string | null>;
   findAccount(
     ctx: KoaContextWithOIDC,
     sub: string,
     token?: any
   ): Promise<Account | undefined>;
+  createUser(props: ICreateUserProps): Promise<string>;
 }
 
-export const getAuthService = (config: ConfigType) => {
-  const AuthService: AuthServiceConstructor = class {
+export const getAuthService = (config: ConfigType): AuthService => {
+  return {
     // creates a new user and retruns the instance of it
-    public static async signUp(
-      props: IcreateUserProps
-    ): Promise<ISignUpReturnType> {
+    async signUp(props: ICreateUserProps): Promise<ISignUpReturnType> {
       const { username, password } = props;
       try {
         const id = uuid();
@@ -76,10 +66,10 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
 
     // returns user ID if authenticated, otherwise null
-    public static async authenticate(
+    async authenticate(
       username: string,
       password: string
     ): Promise<string | null> {
@@ -94,13 +84,13 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
 
     // @param ctx - koa request context
     // @param sub {string} - account identifier (subject)
     // @param token - is a reference to the token used for which a given account is being loaded,
     //   is undefined in scenarios where claims are returned from authorization endpoint
-    public static async findAccount(
+    async findAccount(
       ctx: KoaContextWithOIDC,
       sub: string,
       token?: any
@@ -148,8 +138,24 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
+    /**
+     * creates user and returns user ID
+     */
+    async createUser(props: ICreateUserProps): Promise<string> {
+      try {
+        // create and return a new user
+        const user = await User.create({
+          ...props,
+          id: uuid(),
+          password: await bcrypt.hash(props.password, config.ROUNDS),
+          cretedAt: new Date(),
+          updatedAt: new Date(),
+        });
+        return user.id;
+      } catch (e) {
+        throw e;
+      }
+    },
   };
-
-  return AuthService;
 };

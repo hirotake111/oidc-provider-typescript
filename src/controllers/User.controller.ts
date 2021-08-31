@@ -2,7 +2,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import Provider, { FindAccount, InteractionResults } from "oidc-provider";
-import { AuthServiceConstructor } from "../services/authService";
+import { AuthService } from "../services/authService";
 import { ConfigType } from "../config";
 import { renderPage } from "../utils/utils";
 // import { AuthService } from "../services/authService";
@@ -29,16 +29,16 @@ export interface UserController {
 
 export const getUserController = (
   config: ConfigType,
-  AuthService: AuthServiceConstructor
+  AuthServiceType: AuthService
 ): UserController => {
   // private provider: Provider;
   // // private authenticate: asyncAuthMethod;
   // private authService: AuthServiceConstructor;
   // private signupAllowed: boolean;
 
-  const authService = AuthService;
+  const authService = AuthServiceType;
   const signupAllowed = config.USER_CREATION_ALLOWED;
-  const provider = config.getProvider(AuthService.findAccount);
+  const provider = config.getProvider(AuthServiceType.findAccount);
   config.provider = provider;
   config.provider.proxy = true;
 

@@ -11,7 +11,7 @@ import {
   NotNull,
 } from "sequelize-typescript";
 
-export interface IcreateUserProps {
+export interface ICreateUserProps {
   username: string;
   password: string;
   displayName: string;
