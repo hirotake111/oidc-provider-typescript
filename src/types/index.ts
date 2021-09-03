@@ -1,4 +1,3 @@
-import { JSONWebKeySet } from "jose";
 import { ClientMetadata, CookiesSetOptions } from "oidc-provider";
 
 // custom type declarations
@@ -16,18 +15,12 @@ export interface ICookies {
     resume?: string;
     state?: string;
   };
-  long?: CookiesSetOptions;
-  short?: CookiesSetOptions;
+  long: CookiesSetOptions;
+  short: CookiesSetOptions;
   keys?: (string | Buffer)[];
-}
-
-export interface IConfigLoaderDataType {
-  clients: ClientMetadata[];
-  cookies?: ICookies;
 }
 
 export interface IConfigLoader {
   getClients(): ClientMetadata[];
   getCookies(): ICookies | undefined;
-  getJwks(): JSONWebKeySet;
 }

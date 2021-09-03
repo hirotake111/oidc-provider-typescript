@@ -2,6 +2,10 @@
 
 Open ID Connect server, a part of my portofolio app.
 
+## TODO:
+
+- update getConfig() to return default value
+
 ### Build docker image
 
 ```bash

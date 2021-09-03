@@ -6,7 +6,7 @@ import {
   FindAccount,
 } from "oidc-provider";
 
-export const oidcProviderFactory =
+export const GetOidcProvider =
   (
     issuer: string,
     configuration: Configuration,
@@ -14,7 +14,7 @@ export const oidcProviderFactory =
   ) =>
   (findAccount: FindAccount) => {
     return new Provider(issuer, {
-      adapter, // use default in-memory adapter
+      adapter, // use default in-memory adapter if undefined
       ...configuration,
       findAccount,
     });

@@ -4,11 +4,15 @@ import { JSONWebKeySet } from "jose";
 import Provider, { Configuration, FindAccount } from "oidc-provider";
 import { RedisClient } from "redis";
 import { getRedisAdapter } from "./adapters/redisAdapter";
-import { ConfigLoaderEnv } from "./support/configLoaderEnv";
-import { configurationFactory } from "./support/configuration";
+import { getOIDCConfiguration } from "./support/configuration";
 import { getIORedisClient, getRedisClient } from "./support/getRedisClient";
-import { oidcProviderFactory } from "./support/oidcProviderFactory";
-import { IConfigLoaderDataType } from "./types";
+import { GetOidcProvider } from "./support/oidcProviderFactory";
+import {
+  validateClientMetadata,
+  validateCookieParams,
+  validateJWKS,
+} from "./utils/validations";
+
 dotenv.config();
 
 export const getRounds = (env: string | undefined) => {
@@ -27,32 +31,29 @@ const USER_CREATION_ALLOWED = !!process.env.USER_CREATION_ALLOWED;
 
 export const getConfig = async (): Promise<ConfigType> => {
   console.log("USER_CREATION_ALLOWED,", USER_CREATION_ALLOWED);
-  const OIDCCONFIGURATION = JSON.parse(
-    process.env.OIDCCONFIGURATION || "{}"
-  ) as IConfigLoaderDataType;
-  const JWKS = JSON.parse(process.env.JWKS || "{}") as JSONWebKeySet;
+  const jwks = validateJWKS(process.env.JWKS);
+  const clients = validateClientMetadata(process.env.CLIENTMEDATADAß);
+  const cookieParams = validateCookieParams(process.env.COOKIEPARAMS);
   try {
-    const configuration = await configurationFactory(
-      ConfigLoaderEnv(OIDCCONFIGURATION, JWKS)
+    // OIDC configuration
+    const configuration = await getOIDCConfiguration(
+      clients,
+      cookieParams,
+      jwks
     );
     // redis client
     const redisClient = getRedisClient(REDIS_URL);
     // IORedis client
     const ioRedisClient = getIORedisClient(REDIS_URL, "iodc:");
     const redisAdapter = getRedisAdapter(ioRedisClient);
-    const getProvider = oidcProviderFactory(
-      ISSUER,
-      configuration,
-      redisAdapter
-    );
+    const getProvider = GetOidcProvider(ISSUER, configuration, redisAdapter);
 
     return {
       DATABASE_URI,
       REDIS_CLIENT: redisClient,
       IOREDIS_CLIENT: ioRedisClient,
       ISSUER,
-      OIDCCONFIGURATION,
-      JWKS,
+      jwks,
       PORT,
       PROD,
       ROUNDS,
@@ -72,12 +73,11 @@ export type ConfigType = {
   REDIS_CLIENT: RedisClient;
   IOREDIS_CLIENT: IORedis.Redis;
   ISSUER: string;
-  JWKS: JSONWebKeySet;
+  jwks: JSONWebKeySet;
   PORT: number;
   PROD: boolean;
   ROUNDS: number;
   SECRETKEY: string;
-  OIDCCONFIGURATION: IConfigLoaderDataType;
   USER_CREATION_ALLOWED: boolean;
   configuration: Configuration;
   getProvider: (findAccount: FindAccount) => Provider;
