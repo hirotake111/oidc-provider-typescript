@@ -10,13 +10,14 @@ import { addTestUser, useSetting } from "./utils/utils";
 import { getAuthService } from "./services/authService";
 import { SequelizeOptions } from "sequelize-typescript";
 import { getController } from "./controllers/controllers";
+import { env } from "./env";
 
 let server: Server;
 (async () => {
   const app = express();
 
   // get congig
-  const config = await getConfig();
+  const config = await getConfig(env);
 
   // setting configuration
   useSetting(app);

@@ -30,11 +30,15 @@ interactions.add(selectAccount, 0);
 
 export type ClientFactory = () => Promise<ClientMetadata[]>;
 
-export const getOIDCConfiguration = async (
-  clients: ClientMetadata[],
-  cookies: ICookies,
-  jwks: JSONWebKeySet
-): Promise<Configuration> => {
+export const getOIDCConfiguration = async ({
+  clients,
+  cookies,
+  jwks,
+}: {
+  clients: ClientMetadata[];
+  cookies: ICookies;
+  jwks: JSONWebKeySet;
+}): Promise<Configuration> => {
   return {
     clients,
     interactions: {

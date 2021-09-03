@@ -1,9 +1,7 @@
-import dotenv from "dotenv";
-import IORedis from "ioredis";
-import { JSONWebKeySet } from "jose";
 import Provider, { Configuration, FindAccount } from "oidc-provider";
 import { RedisClient } from "redis";
 import { getRedisAdapter } from "./adapters/redisAdapter";
+import { Env } from "./env";
 import { getOIDCConfiguration } from "./support/configuration";
 import { getIORedisClient, getRedisClient } from "./support/getRedisClient";
 import { GetOidcProvider } from "./support/oidcProviderFactory";
@@ -13,54 +11,42 @@ import {
   validateJWKS,
 } from "./utils/validations";
 
-dotenv.config();
-
-export const getRounds = (env: string | undefined) => {
-  const n = parseInt(env || "5", 10);
-  return n ? n : 5;
-};
-
-const DATABASE_URI = process.env.DATABASE_URI || "NODATABASECONNECTIONSTRING";
-const REDIS_URL = process.env.REDIS_URL || "NOREDISURL";
-const ISSUER = process.env.ISSUER || "NOISSUER";
-const PORT = parseInt(process.env.PORT || "3000", 10); // Port number
-const PROD = process.env.NODE_ENV === "production";
-const ROUNDS = getRounds(process.env.ROUNDS); // used for password hashing
-const SECRETKEY = process.env.SECRETKEY || "supersecret";
-const USER_CREATION_ALLOWED = !!process.env.USER_CREATION_ALLOWED;
-
-export const getConfig = async (): Promise<ConfigType> => {
+export const getConfig = async ({
+  DATABASE_URI,
+  REDIS_URL,
+  ISSUER,
+  PORT,
+  PROD,
+  ROUNDS,
+  SECRETKEY,
+  USER_CREATION_ALLOWED,
+  JWKS,
+  CLIENTMEDATADA,
+  COOKIEPARAMS,
+}: Env): Promise<ConfigType> => {
   console.log("USER_CREATION_ALLOWED,", USER_CREATION_ALLOWED);
-  const jwks = validateJWKS(process.env.JWKS);
-  const clients = validateClientMetadata(process.env.CLIENTMEDATADAß);
-  const cookieParams = validateCookieParams(process.env.COOKIEPARAMS);
   try {
     // OIDC configuration
-    const configuration = await getOIDCConfiguration(
-      clients,
-      cookieParams,
-      jwks
-    );
-    // redis client
-    const redisClient = getRedisClient(REDIS_URL);
+    const configuration = await getOIDCConfiguration({
+      clients: validateClientMetadata(CLIENTMEDATADA),
+      cookies: validateCookieParams(COOKIEPARAMS),
+      jwks: validateJWKS(JWKS),
+    });
     // IORedis client
     const ioRedisClient = getIORedisClient(REDIS_URL, "iodc:");
     const redisAdapter = getRedisAdapter(ioRedisClient);
-    const getProvider = GetOidcProvider(ISSUER, configuration, redisAdapter);
 
     return {
       DATABASE_URI,
-      REDIS_CLIENT: redisClient,
-      IOREDIS_CLIENT: ioRedisClient,
+      REDIS_CLIENT: getRedisClient(REDIS_URL),
       ISSUER,
-      jwks,
       PORT,
       PROD,
       ROUNDS,
       SECRETKEY,
       USER_CREATION_ALLOWED,
       configuration,
-      getProvider,
+      getProvider: GetOidcProvider(ISSUER, configuration, redisAdapter),
       provider: undefined,
     };
   } catch (e) {
@@ -71,9 +57,7 @@ export const getConfig = async (): Promise<ConfigType> => {
 export type ConfigType = {
   DATABASE_URI: string;
   REDIS_CLIENT: RedisClient;
-  IOREDIS_CLIENT: IORedis.Redis;
   ISSUER: string;
-  jwks: JSONWebKeySet;
   PORT: number;
   PROD: boolean;
   ROUNDS: number;

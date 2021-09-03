@@ -19,8 +19,3 @@ export interface ICookies {
   short: CookiesSetOptions;
   keys?: (string | Buffer)[];
 }
-
-export interface IConfigLoader {
-  getClients(): ClientMetadata[];
-  getCookies(): ICookies | undefined;
-}

@@ -67,3 +67,8 @@ export const renderPage = (res: Response, props: IRenderProps) => {
     signupAllowed,
   });
 };
+
+export const getRounds = (env: string | undefined) => {
+  const n = parseInt(env || "5", 10);
+  return n ? n : 5;
+};
