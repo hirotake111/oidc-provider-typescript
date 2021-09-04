@@ -27,42 +27,54 @@ describe("validteJWKS", () => {
   });
 
   it("should thow an error if data is invalid", () => {
-    expect.assertions(5);
+    expect.assertions(6);
     // empty object
-    const emptyObject = {};
+    const emp = {};
     try {
-      validateJWKS(emptyObject);
+      validateJWKS(emp);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${emptyObject}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${emp}`);
     }
     // number
     const num = JSON.stringify(12345);
     try {
       validateJWKS(num);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${num}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${num}`);
     }
     // invalid EC key
     const ec = { keys: [{ kty: "EC", x: "x", y: "y", crv: true }] };
     try {
       validateJWKS(ec);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${ec}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${ec}`);
     }
     // invlalid OKP key
     const okp = { keys: [{ kty: "OKP", crv: "xxx", x: "x" }] };
     try {
       validateJWKS(okp);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${okp}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${okp}`);
     }
-    //
     // invlalid RSA key
     const rsa = { keys: [{ kty: "RSA", n: "n" }] };
     try {
       validateJWKS(rsa);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${rsa}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${rsa}`);
+    }
+    // invalid kty
+    const key = { keys: [{ kty: "XXX", e: "xx", n: "xx" }] };
+    try {
+      validateJWKS(key);
+    } catch (e) {
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: ${key}`);
     }
   });
 
@@ -71,7 +83,8 @@ describe("validteJWKS", () => {
     try {
       validateJWKS(undefined);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid JSONWebKeySet object: undefined`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid JSONWebKeySet object: undefined`);
     }
   });
 });
@@ -83,7 +96,7 @@ describe("validateClientMetadata", () => {
     try {
       expect(validateClientMetadata(clients)).toEqual(clients);
     } catch (e) {
-      console.error(e.message);
+      if (e instanceof Error) console.error(e.message);
     }
   });
 
@@ -92,7 +105,8 @@ describe("validateClientMetadata", () => {
     try {
       validateClientMetadata([]);
     } catch (e) {
-      expect(e.message).toEqual("Invalid clientMetadata[]: []");
+      if (e instanceof Error)
+        expect(e.message).toEqual("Invalid clientMetadata[]: []");
     }
   });
 
@@ -101,32 +115,36 @@ describe("validateClientMetadata", () => {
     // client with no client_id
     try {
       validateClientMetadata([{ redirect_uris: ["https://example.com"] }]);
-    } catch (e) {
-      expect(e.message).toEqual(
-        `Invalid clientMetadata[]: ${JSON.stringify([
-          { redirect_uris: ["https://example.com"] },
-        ])}`
-      );
+    } catch (e: unknown) {
+      if (e instanceof Error)
+        expect(e.message).toEqual(
+          `Invalid clientMetadata[]: ${JSON.stringify([
+            { redirect_uris: ["https://example.com"] },
+          ])}`
+        );
     }
     // client with no redirect_uris
     try {
       validateClientMetadata([{ client_id: "xxxx" }]);
     } catch (e) {
-      expect(e.message).toEqual(
-        `Invalid clientMetadata[]: ${JSON.stringify([{ client_id: "xxxx" }])}`
-      );
+      if (e instanceof Error)
+        expect(e.message).toEqual(
+          `Invalid clientMetadata[]: ${JSON.stringify([{ client_id: "xxxx" }])}`
+        );
     }
     // client is number
     try {
       validateClientMetadata(12345);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid clientMetadata[]: ${12345}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid clientMetadata[]: ${12345}`);
     }
     // client is undefined
     try {
       validateClientMetadata(undefined);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid clientMetadata[]: ${undefined}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid clientMetadata[]: ${undefined}`);
     }
   });
 });
@@ -144,14 +162,16 @@ describe("validateCookieParams", () => {
     try {
       validateCookieParams(undefined);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid CookieParams: ${undefined}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid CookieParams: ${undefined}`);
     }
     // no long attribute
     const invalid = { short: {} };
     try {
       validateCookieParams(invalid);
     } catch (e) {
-      expect(e.message).toEqual(`Invalid CookieParams: ${invalid}`);
+      if (e instanceof Error)
+        expect(e.message).toEqual(`Invalid CookieParams: ${invalid}`);
     }
   });
 });

@@ -50,9 +50,11 @@ export const validateJWKS = (jwks: any): JSONWebKeySet => {
       if (!(key.e && key.n)) throw new Error(err);
       break;
 
-    default:
-      // should be "oct"
+    case "oct":
       break;
+
+    default:
+      throw new Error(err);
   }
 
   return data;
