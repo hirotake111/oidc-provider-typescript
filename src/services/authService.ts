@@ -7,17 +7,9 @@ import {
   ClaimsParameterMember,
 } from "oidc-provider";
 
-import { User } from "../models/User.model";
+import { ICreateUserProps, User } from "../models/User.model";
 import { ConfigType } from "../config";
-import { isUUIDv4 } from "../support/utils";
-
-export interface IcreateUserProps {
-  username: string;
-  password: string;
-  displayName: string;
-  firstName?: string;
-  lastName?: string;
-}
+import { isUUIDv4 } from "../utils/utils";
 
 interface ISignUpReturnType {
   id: string;
@@ -27,23 +19,25 @@ interface ISignUpReturnType {
   lastName?: string;
 }
 
-export interface AuthServiceConstructor {
-  // signUp: (props: IcreateUserProps) => Promise<ISignUpReturnType>;
-  signUp(props: IcreateUserProps): Promise<ISignUpReturnType>;
+export interface AuthService {
+  signUp(props: ICreateUserProps): Promise<ISignUpReturnType>;
   authenticate: (username: string, password: string) => Promise<string | null>;
   findAccount(
     ctx: KoaContextWithOIDC,
     sub: string,
     token?: any
   ): Promise<Account | undefined>;
+  // createUser(props: ICreateUserProps): Promise<string>;
 }
 
-export const getAuthService = (config: ConfigType) => {
-  const AuthService: AuthServiceConstructor = class {
+export const getAuthService = (
+  config: ConfigType,
+  models: { User: typeof User }
+): AuthService => {
+  const { User: UserModel } = models;
+  return {
     // creates a new user and retruns the instance of it
-    public static async signUp(
-      props: IcreateUserProps
-    ): Promise<ISignUpReturnType> {
+    async signUp(props: ICreateUserProps): Promise<ISignUpReturnType> {
       const { username, password } = props;
       try {
         const id = uuid();
@@ -54,12 +48,12 @@ export const getAuthService = (config: ConfigType) => {
           throw new Error("password is too long or too short");
         }
         // if user already exists -> raise an error
-        if (await User.findOne({ where: { username } })) {
+        if (await UserModel.findOne({ where: { username } })) {
           throw new Error("user already exists");
         }
 
         // create and return a new user
-        const user = await User.create({
+        const user = await UserModel.create({
           ...props,
           id,
           password: await bcrypt.hash(password, config.ROUNDS),
@@ -76,16 +70,16 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
 
     // returns user ID if authenticated, otherwise null
-    public static async authenticate(
+    async authenticate(
       username: string,
       password: string
     ): Promise<string | null> {
       try {
         // fetch user from database
-        const user = await User.findOne({ where: { username } });
+        const user = await UserModel.findOne({ where: { username } });
         if (!user) {
           return null;
         }
@@ -94,13 +88,13 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
 
     // @param ctx - koa request context
     // @param sub {string} - account identifier (subject)
     // @param token - is a reference to the token used for which a given account is being loaded,
     //   is undefined in scenarios where claims are returned from authorization endpoint
-    public static async findAccount(
+    async findAccount(
       ctx: KoaContextWithOIDC,
       sub: string,
       token?: any
@@ -109,7 +103,7 @@ export const getAuthService = (config: ConfigType) => {
         // validate user ID
         if (!isUUIDv4(sub)) throw new Error("invalid user ID");
         // fetch user by id and return undefined if not mached
-        const account = await User.findOne({ where: { id: sub } });
+        const account = await UserModel.findOne({ where: { id: sub } });
         if (!account) return undefined;
         return {
           accountId: sub,
@@ -148,8 +142,6 @@ export const getAuthService = (config: ConfigType) => {
       } catch (e) {
         throw e;
       }
-    }
+    },
   };
-
-  return AuthService;
 };

@@ -2,10 +2,11 @@ import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import bcrypt from "bcrypt";
 
-import { AuthServiceConstructor, getAuthService } from "./authService";
-import { User } from "../models/User.model";
-import { getRounds } from "../config";
-import { KoaContextWithOIDC } from "oidc-provider";
+import { AuthService, getAuthService } from "./authService";
+import { ConfigType, getConfig } from "../config";
+import { getRounds } from "../utils/utils";
+import { env } from "../env";
+import { ICreateUserProps } from "../models/User.model";
 
 const createUser = (len: number = 10) => ({
   id: uuid(),
@@ -18,83 +19,108 @@ const createUser = (len: number = 10) => ({
 
 describe("AuthService", () => {
   describe("signUp() method", () => {
-    let config: any;
-    let AuthService: AuthServiceConstructor;
-    beforeEach(() => {
-      config = { ROUNDS: 4 };
-      AuthService = getAuthService(config);
+    let config: ConfigType;
+    let authService: AuthService;
+    let models: any;
+    let user: {
+      id: string;
+      username: string;
+      password: string;
+      displayName: string;
+      firstName: string;
+      lastName: string;
+    };
+
+    beforeEach(async () => {
+      user = createUser();
+      models = {
+        User: {
+          findOne: jest.fn().mockReturnValue(null),
+          create: jest.fn().mockReturnValue(user),
+        },
+      } as any;
     });
+
     test("It should create a new user", async () => {
       expect.assertions(5);
       try {
-        const user = createUser();
-        User.findOne = jest.fn().mockReturnValueOnce(null);
-        User.create = jest.fn().mockReturnValue(user);
-        const created = await AuthService.signUp(user);
+        config = await getConfig(env);
+        authService = getAuthService(config, models);
+        const created = await authService.signUp(user);
         expect(created.id).toEqual(user.id);
         expect(created.username).toEqual(user.username);
         expect(created.displayName).toEqual(user.displayName);
         expect(created.firstName).toEqual(user.firstName);
         expect(created.lastName).toEqual(user.lastName);
       } catch (e) {
-        console.error(e);
+        throw e;
       }
     });
 
     test("It should fail if password is too long or too short", async () => {
       expect.assertions(2);
-      const user = createUser(21);
-      User.findOne = jest.fn().mockReturnValueOnce(null);
+      user = createUser(21);
+      authService = getAuthService(config, models);
       try {
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
-        expect(e.message).toEqual("password is too long or too short");
+        if (e instanceof Error)
+          expect(e.message).toEqual("password is too long or too short");
       }
       try {
         user.password = nanoid(7);
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
-        expect(e.message).toEqual("password is too long or too short");
+        if (e instanceof Error)
+          expect(e.message).toEqual("password is too long or too short");
       }
     });
 
     test("It should fail user already exists", async () => {
       expect.assertions(1);
-      const user = createUser();
-      User.findOne = jest.fn().mockReturnValueOnce(user);
+      user = createUser();
+      models.User.findOne = jest.fn().mockReturnValue(user);
+      authService = getAuthService(config, models);
       try {
-        await AuthService.signUp(user);
+        await authService.signUp(user);
       } catch (e) {
-        expect(e.message).toEqual("user already exists");
+        if (e instanceof Error)
+          expect(e.message).toEqual("user already exists");
       }
     });
   });
 
   describe(".authenticate() method", () => {
-    let config: any;
-    let AuthService: AuthServiceConstructor;
-    const ROUNDS = getRounds("5");
-    beforeEach(() => {
-      config = { ROUDNS: 4 };
-      AuthService = getAuthService(config);
+    let config: ConfigType;
+    let authService: AuthService;
+    const ROUNDS = 5;
+    let models: {
+      User: {
+        findOne: () => any;
+      };
+    };
+
+    beforeEach(async () => {
+      config = await getConfig(env);
+      models = {
+        User: {
+          findOne: jest.fn(),
+        },
+      };
     });
 
     test("It should return id", async () => {
       try {
         expect.assertions(1);
+        const id = uuid();
         const username = "adele";
-        const plainPassword = nanoid();
-        const user = {
-          id: uuid(),
-          username,
-          password: await bcrypt.hash(plainPassword, ROUNDS),
-        };
-        User.findOne = jest.fn().mockReturnValueOnce(user);
-        const isAuthenticated = await AuthService.authenticate(
-          user.username,
-          plainPassword
-        );
-        expect(isAuthenticated).toEqual(user.id);
+        const plain = nanoid();
+        const password = await bcrypt.hash(plain, ROUNDS);
+        const user = { id, username, password };
+        models.User.findOne = jest.fn().mockReturnValue(user);
+        authService = getAuthService(config, models as any);
+        const result = await authService.authenticate(username, plain);
+        expect(result).toEqual(user.id);
       } catch (e) {
         throw e;
       }
@@ -103,18 +129,15 @@ describe("AuthService", () => {
     test("It should return null if credentials is invald", async () => {
       try {
         expect.assertions(2);
+        const id = "xxx-xxx-xxx";
         const username = "adele";
-        const plainPassword = nanoid();
-        const user = {
-          id: "xxx-xxx-xxx",
-          username,
-          password: await bcrypt.hash("otherpassword", ROUNDS),
-        };
-        User.findOne = jest.fn().mockReturnValueOnce(user);
-        expect(await AuthService.authenticate(username, plainPassword)).toEqual(
-          null
-        );
-        expect(await AuthService.authenticate("Megan", "mypassword")).toEqual(
+        const plain = nanoid();
+        const password = await bcrypt.hash("otherpassword", ROUNDS);
+        const user = { id, username, password };
+        models.User.findOne = jest.fn().mockReturnValueOnce(user);
+        authService = getAuthService(config, models as any);
+        expect(await authService.authenticate(username, plain)).toEqual(null);
+        expect(await authService.authenticate("Megan", "xxxxxxxx")).toEqual(
           null
         );
       } catch (e) {
@@ -123,38 +146,54 @@ describe("AuthService", () => {
     });
 
     test("It should throw error", async () => {
+      const msg = "db error";
       try {
         expect.assertions(1);
-        User.findOne = jest.fn().mockRejectedValue(new Error("Database Error"));
-        await AuthService.authenticate("Adele", "adelespassword");
+        models.User.findOne = jest.fn().mockImplementation(() => {
+          throw new Error(msg);
+        });
+        authService = getAuthService(config, models as any);
+        await authService.authenticate("Adele", "adelespassword");
       } catch (e) {
-        expect(e.message).toEqual("Database Error");
+        if (e instanceof Error) expect(e.message).toEqual(msg);
       }
     });
   });
 
   describe(".findAccount() method", () => {
-    let config: any;
-    let AuthService: AuthServiceConstructor;
-    beforeEach(() => {
-      config = { ROUNDS: 4 };
-      AuthService = getAuthService(config);
+    let config: ConfigType;
+    let user: {
+      id: string;
+      username: string;
+      displayName: string;
+      firstName: string;
+      lastName: string;
+    };
+    let ctx: any;
+    let authService: AuthService;
+    let models: {
+      User: {
+        findOne: any;
+      };
+    };
+
+    beforeEach(async () => {
+      config = await getConfig(env);
+      user = createUser();
+      models = {
+        User: { findOne: jest.fn().mockReturnValue(user) },
+      };
+      ctx = {};
+      authService = getAuthService(config, models as any);
     });
 
     test("It should return Promise<Account | undefined>", async () => {
       expect.assertions(3);
       try {
-        const user = createUser();
-        User.findOne = jest.fn().mockReturnValue(user);
-        const account = await AuthService.findAccount(
-          {} as KoaContextWithOIDC,
-          user.id
-        );
-        expect(account?.accountId).toEqual(user.id);
-        const claims = account?.claims;
-        if (!claims) {
-          throw new Error("claims() is not defined");
-        }
+        const account = await authService.findAccount(ctx, user.id);
+        if (!account) throw new Error("account is undefined");
+        const { accountId, claims } = account;
+        expect(accountId).toEqual(user.id);
         expect(typeof claims).toEqual("function");
         const claimsResult = await claims("use", "scope", {} as any, []);
         expect(claimsResult.sub).toEqual(user.id);
@@ -166,39 +205,33 @@ describe("AuthService", () => {
     test("It should return undefined if not exists", async () => {
       expect.assertions(1);
       try {
-        User.findOne = jest.fn().mockReturnValue(null);
-        const account = await AuthService.findAccount(
-          {} as KoaContextWithOIDC,
-          uuid()
-        );
+        models.User.findOne = jest.fn().mockReturnValue(null);
+        const account = await authService.findAccount(ctx, uuid());
         expect(account).toEqual(undefined);
       } catch (e) {
         throw e;
       }
     });
 
-    test("It hould throw error if id is not UUID", async () => {
+    it("should throw error if id is not UUID", async () => {
       expect.assertions(1);
       try {
-        const user = createUser();
-        user.id = "userId";
-        User.findOne = jest.fn().mockReturnValue(user);
-        const account = await AuthService.findAccount(
-          {} as KoaContextWithOIDC,
-          user.id
-        );
+        await authService.findAccount(ctx, "xxxx");
       } catch (e) {
-        expect(e.message).toEqual("invalid user ID");
+        if (e instanceof Error) expect(e.message).toEqual("invalid user ID");
       }
     });
 
-    test("It hould throw error if any other error", async () => {
+    it("should throw error if any other error", async () => {
       expect.assertions(1);
+      const msg = "unknown error";
       try {
-        User.findOne = jest.fn().mockRejectedValue(new Error("Database Error"));
-        await AuthService.findAccount({} as KoaContextWithOIDC, uuid());
+        models.User.findOne = jest.fn().mockImplementation(() => {
+          throw new Error(msg);
+        });
+        await authService.findAccount(ctx, uuid());
       } catch (e) {
-        expect(e.message).toEqual("Database Error");
+        if (e instanceof Error) expect(e.message).toEqual(msg);
       }
     });
   });

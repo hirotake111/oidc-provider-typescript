@@ -6,49 +6,69 @@ import { getConfig } from "./config";
 import { useRoute } from "./router";
 import { User } from "./models/User.model";
 import { dbFactory } from "./support/dbFactory";
-import { addTestUser, useSetting } from "./support/utils";
+import { addTestUser, useSetting } from "./utils/utils";
 import { getAuthService } from "./services/authService";
 import { SequelizeOptions } from "sequelize-typescript";
 import { getController } from "./controllers/controllers";
+import { env } from "./env";
+import { getIORedisClient, getRedisClient } from "./support/getRedisClient";
+import { getRedisAdapter } from "./adapters/redisAdapter";
+import { GetOidcProvider } from "./support/oidcProviderFactory";
 
 let server: Server;
 (async () => {
   const app = express();
 
   // get congig
-  const config = await getConfig();
+  const config = await getConfig(env);
 
   // setting configuration
   useSetting(app);
 
   // connect to database
-  const options: SequelizeOptions = config.PROD
-    ? {
-        logging: false,
-        dialectOptions: {
+  const options: SequelizeOptions = {
+    logging: false,
+    dialectOptions: config.POSTGRES_CONNECTION_TLS
+      ? {
           ssl: {
-            requre: true,
+            require: true,
             rejectUnauthorized: false,
           },
-        },
-      }
-    : { logging: false };
+        }
+      : {},
+  };
   await dbFactory(config.DATABASE_URI, [User], options);
 
   // add test user
   if (!config.PROD) {
+    console.log("Bootstrapping server as DEVELOPMENT");
     console.log("Adding test user...");
     await addTestUser();
+  } else {
+    console.log("Bootstrapping server as PRODUCTION");
   }
 
+  // some logging messages
+  console.log("USER_CREATION_ALLOWED:", config.USER_CREATION_ALLOWED);
+  console.log("Connection to Redis over TLS:", config.REDIS_CONNECTION_TLS);
+  if (!config.redisClient)
+    console.log("config.redisClient is undefined - use in-memory store");
+
   // get AuthService
-  const AuthService = getAuthService(config);
+  const AuthService = getAuthService(config, { User });
+
+  // get redis client
+  config.redisClient = getRedisClient(config.REDIS_URL);
+  // get IORedis client
+  const ioRedisClient = getIORedisClient(config.REDIS_URL, "iodc:");
+  // get Redis Adapter
+  const redisAdapter = getRedisAdapter(ioRedisClient);
+  config.getProvider = GetOidcProvider(config, redisAdapter);
+  // Set the following setting if this app has web server in front of itself
+  app.enable("trust proxy");
 
   // get controller
   const controller = getController(config, AuthService);
-
-  // Set the following setting if this app has web server in front of itself
-  app.enable("trust proxy");
 
   // Append routes
   useRoute(app, controller, config);

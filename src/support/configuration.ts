@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import { JSONWebKeySet } from "jose";
 
 interface ICtx {
   oidc: {
@@ -11,8 +10,9 @@ import {
   ClientMetadata,
   Configuration,
   interactionPolicy,
+  KoaContextWithOIDC,
 } from "oidc-provider";
-import { IConfigLoader } from "../types";
+import { ICookies } from "../types";
 
 // copies the default policy, already has login and consent prompt policies
 const interactions = interactionPolicy.base(); // policy();
@@ -28,22 +28,26 @@ interactions.add(selectAccount, 0);
 
 export type ClientFactory = () => Promise<ClientMetadata[]>;
 
-export const configurationFactory = async (
-  configLoader: IConfigLoader
-): Promise<Configuration> => {
-  const clients = configLoader.getClients();
-  const cookies = configLoader.getCookies();
-  const jwks = configLoader.getJwks();
+export const getOIDCConfiguration = async ({
+  clients,
+  cookies,
+  jwks,
+}: {
+  clients: ClientMetadata[];
+  cookies: ICookies;
+  jwks: JSONWebKeySet;
+}): Promise<Configuration> => {
   return {
     clients,
     interactions: {
       policy: interactions,
-      url(ctx: ICtx) {
+      url(ctx: KoaContextWithOIDC, interaction: any) {
         // eslint-disable-line no-unused-vars
         return `/interaction/${ctx.oidc.uid}`;
       },
     },
     cookies,
+    jwks,
     claims: {
       address: ["address"],
       email: ["email", "email_verified"],
@@ -73,7 +77,6 @@ export const configurationFactory = async (
       introspection: { enabled: false }, // defaults to false
       revocation: { enabled: false }, // defaults to false
     },
-    jwks,
     ttl: {
       AccessToken: 1 * 60 * 60, // 1 hour in seconds
       AuthorizationCode: 10 * 60, // 10 minutes in seconds

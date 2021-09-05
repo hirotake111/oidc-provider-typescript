@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction, Express } from "express";
+import { ConfigType, getConfig } from "../config";
+import { env } from "../env";
 
 import {
   messageMiddleware,
@@ -25,6 +27,7 @@ describe("middlewares", () => {
     setMock = res.set as jest.Mock;
     redirectMock = res.redirect as jest.Mock;
   });
+
   describe("messageMddleware() function", () => {
     test("It should call console.log and next function", () => {
       expect.assertions(3);
@@ -109,20 +112,20 @@ describe("middlewares", () => {
   });
 
   describe("useMiddleware() function", () => {
-    let config: any;
-    beforeEach(() => {
-      config = {
-        SECRETKET: "secret",
-        REDIS_CLIENT: {},
-        RROD: true,
-      };
+    let config: ConfigType;
+
+    beforeEach(async () => {
+      config = await getConfig(env);
     });
-    test("It should call app.use 5 times", () => {
+
+    test("It should call app.use 5 times", async () => {
+      console.log("eee");
       expect.assertions(1);
       const app = {} as Express;
       app.use = jest.fn();
       const useMock = app.use as jest.Mock;
       try {
+        console.log(config);
         useMiddleware(app, config);
         expect(useMock).toHaveBeenCalledTimes(5);
       } catch (e) {

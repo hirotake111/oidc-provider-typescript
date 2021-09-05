@@ -1,8 +1,8 @@
-import redis from "redis";
+import { createClient } from "redis";
 import Redis from "ioredis";
 
 export const getRedisClient = (url: string) => {
-  return redis.createClient({ url });
+  return createClient({ url });
 };
 
 export const getIORedisClient = (url: string, keyPrefix: string) => {

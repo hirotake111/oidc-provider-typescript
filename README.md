@@ -2,6 +2,10 @@
 
 Open ID Connect server, a part of my portofolio app.
 
+## TODO:
+
+- update getConfig() to return default value
+
 ### Build docker image
 
 ```bash
@@ -12,6 +16,10 @@ docker build -t $IMAGE_NAME .
 
 # Image for production (multi platform)
 npm run buildprod
+
+# build docker image for a sample client
+cd client
+docker build -t auth_sample_client .
 ```
 
 ### Required environment variables
@@ -24,8 +32,9 @@ npm run buildprod
 - ISSUER - URL for OIDC server itself
 - REDIS_URL - URL for redis server
 - USER_CREATION_ALLOWED - set any value if you want to allow user to create an account
+- REDIS_CONNECTION_TLS - set any value if you want to connect to Redis server over TLS
 
-### Run docker container
+### Run docker containers
 
 ```bash
 # Start containers

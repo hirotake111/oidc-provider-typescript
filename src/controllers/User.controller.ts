@@ -2,19 +2,10 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Http2ServerRequest, Http2ServerResponse } from "http2";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import Provider, { FindAccount, InteractionResults } from "oidc-provider";
-import { AuthServiceConstructor } from "../services/authService";
+import { AuthService } from "../services/authService";
 import { ConfigType } from "../config";
+import { renderPage } from "../utils/utils";
 // import { AuthService } from "../services/authService";
-
-interface IRenderProps {
-  view: string;
-  client: any;
-  details: any;
-  title: string;
-  flash?: string;
-  csrfToken?: string;
-  signupAllowed?: boolean;
-}
 
 interface PostRequestBody {
   username: string;
@@ -36,34 +27,13 @@ export interface UserController {
   getRoot: RequestHandler;
 }
 
-export const renderPage = (res: Response, props: IRenderProps) => {
-  const { view, client, details, title, flash, signupAllowed } = props;
-  res.render(view, {
-    client,
-    uid: details.uid,
-    params: details.params,
-    details: details.prompt.details,
-    flash,
-    title,
-    session: details.session ? details.session : undefined,
-    csrfToken: props.csrfToken,
-    dbg: { params: details.params, prompt: details.prompt },
-    signupAllowed,
-  });
-};
-
 export const getUserController = (
   config: ConfigType,
-  AuthService: AuthServiceConstructor
+  authService: AuthService
 ): UserController => {
-  // private provider: Provider;
-  // // private authenticate: asyncAuthMethod;
-  // private authService: AuthServiceConstructor;
-  // private signupAllowed: boolean;
-
-  const authService = AuthService;
   const signupAllowed = config.USER_CREATION_ALLOWED;
-  const provider = config.getProvider(AuthService.findAccount);
+  if (!config.getProvider) throw new Error("config.getProvider is undefined!");
+  const provider = config.getProvider(authService.findAccount);
   config.provider = provider;
   config.provider.proxy = true;
 
@@ -108,10 +78,11 @@ export const getUserController = (
         }
       } catch (e) {
         // console.error("INTERNAL SERVER ERROR: ", e);
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -163,10 +134,11 @@ export const getUserController = (
           signupAllowed,
         });
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -180,10 +152,11 @@ export const getUserController = (
 
         return res.status(404).send("NOT FOUND");
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -205,10 +178,11 @@ export const getUserController = (
         await provider.interactionFinished(req, res, result, options);
         next();
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -228,10 +202,11 @@ export const getUserController = (
           csrfToken,
         });
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -279,22 +254,24 @@ export const getUserController = (
           mergeWithLastSubmission: false,
         });
       } catch (e) {
-        if (e.message === "user already exists") {
-          // render signup page again
-          details.params.login_hint = props.username;
-          return renderPage(res, {
-            view: "signup",
-            client,
-            details,
-            title: "Sign-up",
-            flash: e.message,
-            csrfToken: req.csrfToken(),
+        if (e instanceof Error) {
+          if (e.message === "user already exists") {
+            // render signup page again
+            details.params.login_hint = props.username;
+            return renderPage(res, {
+              view: "signup",
+              client,
+              details,
+              title: "Sign-up",
+              flash: e.message,
+              csrfToken: req.csrfToken(),
+            });
+          }
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
           });
         }
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
       }
     },
 
