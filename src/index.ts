@@ -45,6 +45,9 @@ let server: Server;
     await addTestUser();
   }
 
+  // show if user creation is allowed
+  console.log("USER_CREATION_ALLOWED,", config.USER_CREATION_ALLOWED);
+
   // get AuthService
   const AuthService = getAuthService(config, { User });
 

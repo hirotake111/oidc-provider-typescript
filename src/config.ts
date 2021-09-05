@@ -21,7 +21,6 @@ export const getConfig = async ({
   CLIENTMEDATADA,
   COOKIEPARAMS,
 }: Env): Promise<ConfigType> => {
-  // console.log("USER_CREATION_ALLOWED,", USER_CREATION_ALLOWED);
   try {
     // OIDC configuration
     const configuration = await getOIDCConfiguration({
@@ -29,14 +28,10 @@ export const getConfig = async ({
       cookies: validateCookieParams(COOKIEPARAMS),
       jwks: validateJWKS(JWKS),
     });
-    // IORedis client
-    // const ioRedisClient = getIORedisClient(REDIS_URL, "iodc:");
-    // const redisAdapter = getRedisAdapter(ioRedisClient);
 
     return {
       DATABASE_URI,
       REDIS_URL,
-      // REDIS_CLIENT: getRedisClient(REDIS_URL),
       ISSUER,
       PORT,
       PROD,
@@ -44,8 +39,6 @@ export const getConfig = async ({
       SECRETKEY,
       USER_CREATION_ALLOWED,
       configuration,
-      // getProvider: GetOidcProvider(ISSUER, configuration, redisAdapter),
-      // provider: undefined,
     };
   } catch (e) {
     throw e;
