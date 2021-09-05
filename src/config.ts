@@ -20,6 +20,8 @@ export const getConfig = async ({
   JWKS,
   CLIENTMEDATADA,
   COOKIEPARAMS,
+  REDIS_CONNECTION_TLS,
+  POSTGRES_CONNECTION_TLS,
 }: Env): Promise<ConfigType> => {
   try {
     // OIDC configuration
@@ -32,6 +34,8 @@ export const getConfig = async ({
     return {
       DATABASE_URI,
       REDIS_URL,
+      REDIS_CONNECTION_TLS,
+      POSTGRES_CONNECTION_TLS,
       ISSUER,
       PORT,
       PROD,
@@ -48,6 +52,8 @@ export const getConfig = async ({
 export type ConfigType = {
   DATABASE_URI: string;
   REDIS_URL: string;
+  REDIS_CONNECTION_TLS: boolean;
+  POSTGRES_CONNECTION_TLS: boolean;
   redisClient?: RedisClient;
   ISSUER: string;
   PORT: number;

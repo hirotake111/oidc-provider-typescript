@@ -26,27 +26,27 @@ let server: Server;
   useSetting(app);
 
   // connect to database
-  const options: SequelizeOptions = config.PROD
-    ? {
-        logging: false,
-        dialectOptions: {
+  const options: SequelizeOptions = {
+    logging: false,
+    dialectOptions: config.POSTGRES_CONNECTION_TLS
+      ? {
           ssl: {
-            requre: true,
+            require: true,
             rejectUnauthorized: false,
           },
-        },
-      }
-    : { logging: false };
+        }
+      : {},
+  };
   await dbFactory(config.DATABASE_URI, [User], options);
 
   // add test user
   if (!config.PROD) {
+    console.log("Bootstrapping server as DEVELOPMENT");
     console.log("Adding test user...");
     await addTestUser();
+  } else {
+    console.log("Bootstrapping server as PRODUCTION");
   }
-
-  // show if user creation is allowed
-  console.log("USER_CREATION_ALLOWED,", config.USER_CREATION_ALLOWED);
 
   // get AuthService
   const AuthService = getAuthService(config, { User });
@@ -66,6 +66,12 @@ let server: Server;
 
   // Append routes
   useRoute(app, controller, config);
+
+  // some logging messages
+  console.log("USER_CREATION_ALLOWED:", config.USER_CREATION_ALLOWED);
+  console.log("Connection to Redis over TLS:", config.REDIS_CONNECTION_TLS);
+  if (!config.redisClient)
+    console.log("config.redisClient is undefined - use in-memory store");
 
   // start HTTP server
   server = app.listen(config.PORT, () => {

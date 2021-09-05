@@ -1,6 +1,4 @@
-import dotenv from "dotenv";
 import { JSONWebKeySet } from "jose";
-dotenv.config();
 
 interface ICtx {
   oidc: {

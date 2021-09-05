@@ -1,14 +1,15 @@
 import { GetOidcProvider } from "./oidcProviderFactory";
 import { Provider } from "oidc-provider";
-
-jest.mock("oidc-provider");
+import { getConfig } from "../config";
+import { env } from "../env";
 
 describe("oidcProviderFactory", () => {
-  test("It should return Provider instance", () => {
+  test("It should return Provider instance", async () => {
     expect.assertions(1);
     try {
-      const p = GetOidcProvider("issuer", {} as any, {} as any)({} as any);
-      expect(Provider).toBeCalledTimes(1);
+      const config = await getConfig(env);
+      const p = GetOidcProvider(config, {} as any);
+      expect(typeof p).toEqual("function");
     } catch (e) {
       throw e;
     }
