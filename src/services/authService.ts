@@ -27,10 +27,14 @@ export interface AuthService {
     sub: string,
     token?: any
   ): Promise<Account | undefined>;
-  createUser(props: ICreateUserProps): Promise<string>;
+  // createUser(props: ICreateUserProps): Promise<string>;
 }
 
-export const getAuthService = (config: ConfigType): AuthService => {
+export const getAuthService = (
+  config: ConfigType,
+  models: { User: typeof User }
+): AuthService => {
+  const { User: UserModel } = models;
   return {
     // creates a new user and retruns the instance of it
     async signUp(props: ICreateUserProps): Promise<ISignUpReturnType> {
@@ -44,12 +48,12 @@ export const getAuthService = (config: ConfigType): AuthService => {
           throw new Error("password is too long or too short");
         }
         // if user already exists -> raise an error
-        if (await User.findOne({ where: { username } })) {
+        if (await UserModel.findOne({ where: { username } })) {
           throw new Error("user already exists");
         }
 
         // create and return a new user
-        const user = await User.create({
+        const user = await UserModel.create({
           ...props,
           id,
           password: await bcrypt.hash(password, config.ROUNDS),
@@ -75,7 +79,7 @@ export const getAuthService = (config: ConfigType): AuthService => {
     ): Promise<string | null> {
       try {
         // fetch user from database
-        const user = await User.findOne({ where: { username } });
+        const user = await UserModel.findOne({ where: { username } });
         if (!user) {
           return null;
         }
@@ -99,7 +103,7 @@ export const getAuthService = (config: ConfigType): AuthService => {
         // validate user ID
         if (!isUUIDv4(sub)) throw new Error("invalid user ID");
         // fetch user by id and return undefined if not mached
-        const account = await User.findOne({ where: { id: sub } });
+        const account = await UserModel.findOne({ where: { id: sub } });
         if (!account) return undefined;
         return {
           accountId: sub,
@@ -135,24 +139,6 @@ export const getAuthService = (config: ConfigType): AuthService => {
             };
           },
         };
-      } catch (e) {
-        throw e;
-      }
-    },
-    /**
-     * creates user and returns user ID
-     */
-    async createUser(props: ICreateUserProps): Promise<string> {
-      try {
-        // create and return a new user
-        const user = await User.create({
-          ...props,
-          id: uuid(),
-          password: await bcrypt.hash(props.password, config.ROUNDS),
-          cretedAt: new Date(),
-          updatedAt: new Date(),
-        });
-        return user.id;
       } catch (e) {
         throw e;
       }

@@ -13,8 +13,12 @@ const env = {
   SECRETKEY: process.env.SECRETKEY || "supersecret",
   USER_CREATION_ALLOWED: !!process.env.USER_CREATION_ALLOWED,
   JWKS: JSON.parse(process.env.JWKS || "{}"),
-  CLIENTMEDATADA: JSON.parse(process.env.CLIENTMEDATADA || "[]"),
-  COOKIEPARAMS: JSON.parse(process.env.COOKIEPARAMS || "{}"),
+  CLIENTMEDATADA: JSON.parse(
+    process.env.CLIENTMEDATADA || '[{"client_id":"x","redirect_uris":["y"]}]'
+  ),
+  COOKIEPARAMS: JSON.parse(
+    process.env.COOKIEPARAMS || '{"long":{},"short":{}}'
+  ),
 };
 
 type Env = typeof env;

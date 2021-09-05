@@ -29,16 +29,11 @@ export interface UserController {
 
 export const getUserController = (
   config: ConfigType,
-  AuthServiceType: AuthService
+  authService: AuthService
 ): UserController => {
-  // private provider: Provider;
-  // // private authenticate: asyncAuthMethod;
-  // private authService: AuthServiceConstructor;
-  // private signupAllowed: boolean;
-
-  const authService = AuthServiceType;
   const signupAllowed = config.USER_CREATION_ALLOWED;
-  const provider = config.getProvider(AuthServiceType.findAccount);
+  if (!config.getProvider) throw new Error("config.getProvider is undefined!");
+  const provider = config.getProvider(authService.findAccount);
   config.provider = provider;
   config.provider.proxy = true;
 
@@ -83,10 +78,11 @@ export const getUserController = (
         }
       } catch (e) {
         // console.error("INTERNAL SERVER ERROR: ", e);
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -138,10 +134,11 @@ export const getUserController = (
           signupAllowed,
         });
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -155,10 +152,11 @@ export const getUserController = (
 
         return res.status(404).send("NOT FOUND");
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -180,10 +178,11 @@ export const getUserController = (
         await provider.interactionFinished(req, res, result, options);
         next();
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -203,10 +202,11 @@ export const getUserController = (
           csrfToken,
         });
       } catch (e) {
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
+        if (e instanceof Error)
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
+          });
       }
     },
 
@@ -254,22 +254,24 @@ export const getUserController = (
           mergeWithLastSubmission: false,
         });
       } catch (e) {
-        if (e.message === "user already exists") {
-          // render signup page again
-          details.params.login_hint = props.username;
-          return renderPage(res, {
-            view: "signup",
-            client,
-            details,
-            title: "Sign-up",
-            flash: e.message,
-            csrfToken: req.csrfToken(),
+        if (e instanceof Error) {
+          if (e.message === "user already exists") {
+            // render signup page again
+            details.params.login_hint = props.username;
+            return renderPage(res, {
+              view: "signup",
+              client,
+              details,
+              title: "Sign-up",
+              flash: e.message,
+              csrfToken: req.csrfToken(),
+            });
+          }
+          return res.status(500).send({
+            title: "INTERNAL SERVER ERROR",
+            details: e.message,
           });
         }
-        return res.status(500).send({
-          title: "INTERNAL SERVER ERROR",
-          details: e.message,
-        });
       }
     },
 

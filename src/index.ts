@@ -11,6 +11,9 @@ import { getAuthService } from "./services/authService";
 import { SequelizeOptions } from "sequelize-typescript";
 import { getController } from "./controllers/controllers";
 import { env } from "./env";
+import { getIORedisClient, getRedisClient } from "./support/getRedisClient";
+import { getRedisAdapter } from "./adapters/redisAdapter";
+import { GetOidcProvider } from "./support/oidcProviderFactory";
 
 let server: Server;
 (async () => {
@@ -43,13 +46,20 @@ let server: Server;
   }
 
   // get AuthService
-  const AuthService = getAuthService(config);
+  const AuthService = getAuthService(config, { User });
+
+  // get redis client
+  config.redisClient = getRedisClient(config.REDIS_URL);
+  // get IORedis client
+  const ioRedisClient = getIORedisClient(config.REDIS_URL, "iodc:");
+  // get Redis Adapter
+  const redisAdapter = getRedisAdapter(ioRedisClient);
+  config.getProvider = GetOidcProvider(config, redisAdapter);
+  // Set the following setting if this app has web server in front of itself
+  app.enable("trust proxy");
 
   // get controller
   const controller = getController(config, AuthService);
-
-  // Set the following setting if this app has web server in front of itself
-  app.enable("trust proxy");
 
   // Append routes
   useRoute(app, controller, config);

@@ -1,21 +1,20 @@
 import {
   AdapterConstructor,
   AdapterFactory,
-  Configuration,
   Provider,
   FindAccount,
 } from "oidc-provider";
+import { ConfigType } from "../config";
 
 export const GetOidcProvider =
   (
-    issuer: string,
-    configuration: Configuration,
+    config: ConfigType,
     adapter: AdapterConstructor | AdapterFactory | undefined
   ) =>
   (findAccount: FindAccount) => {
-    return new Provider(issuer, {
+    return new Provider(config.ISSUER, {
       adapter, // use default in-memory adapter if undefined
-      ...configuration,
+      ...config.configuration,
       findAccount,
     });
   };

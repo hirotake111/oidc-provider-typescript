@@ -63,7 +63,7 @@ export const useMiddleware = (app: Express, config: ConfigType) => {
     session({
       secret: config.SECRETKEY,
       name: "authSessionId",
-      store: new redisStore({ client: config.REDIS_CLIENT }),
+      store: new redisStore({ client: config.redisClient }),
       resave: false,
       saveUninitialized: false,
       cookie: {
