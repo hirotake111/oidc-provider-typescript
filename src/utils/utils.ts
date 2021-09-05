@@ -6,6 +6,11 @@ import morgan from "morgan";
 
 import { User } from "../models/User.model";
 import { InteractionResults } from "oidc-provider";
+import { ConfigType } from "../config";
+import session from "express-session";
+import connectRedis from "connect-redis";
+
+const RedisStoreConstructor = connectRedis(session);
 
 export const isUUIDv4 = (id?: string): boolean => {
   if (!id) {
@@ -70,5 +75,25 @@ export const renderPage = (res: Response, props: IRenderProps) => {
 
 export const getRounds = (env: string | undefined) => {
   const n = parseInt(env || "5", 10);
-  return n ? n : 5;
+  return n;
+};
+
+export const getSession = (config: ConfigType) => {
+  const store = config.redisClient
+    ? new RedisStoreConstructor({ client: config.redisClient })
+    : undefined;
+  if (!store)
+    console.log("config.redisClient is undefined - use in-memory store");
+  return session({
+    secret: config.SECRETKEY,
+    name: "authSessionId",
+    store,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 1, // 1 minute(s)
+      sameSite: "lax",
+      secure: config.PROD ? true : false,
+    },
+  });
 };

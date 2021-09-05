@@ -4,11 +4,16 @@ import { Response } from "express";
 
 import {
   addTestUser,
+  getRounds,
+  getSession,
   IRenderProps,
   isUUIDv4,
   renderPage,
   useSetting,
 } from "./utils";
+import { ConfigType, getConfig } from "../config";
+import { env } from "../env";
+import { getRedisClient } from "../support/getRedisClient";
 
 jest.mock("../models/User.model");
 
@@ -78,5 +83,52 @@ describe("renderPage", () => {
     props.details.session = undefined;
     renderPage(res, props);
     expect(res.render).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getRounds", () => {
+  it("should return number", () => {
+    expect.assertions(2);
+    expect(getRounds("11")).toEqual(11);
+    expect(getRounds(undefined)).toEqual(5);
+  });
+});
+
+describe("getSession", () => {
+  let config: ConfigType;
+
+  beforeEach(async () => {
+    config = await getConfig(env);
+  });
+
+  it("should return session middleware", () => {
+    expect.assertions(2);
+    try {
+      // use redis client
+      config.redisClient = jest.fn() as any;
+      let sessionMiddleware = getSession(config);
+      expect(sessionMiddleware).toBeTruthy();
+      // use in-memory
+      config.redisClient = undefined;
+      sessionMiddleware = getSession(config);
+      expect(sessionMiddleware).toBeTruthy();
+    } catch (e) {
+      throw e;
+    }
+  });
+
+  it("should return session middleware with either cookie secure or not", () => {
+    try {
+      // config.PROD === true
+      config.PROD = true;
+      let sessionMiddleware = getSession(config);
+      expect(sessionMiddleware).toBeTruthy();
+      // config.PROD === false
+      config.PROD = false;
+      sessionMiddleware = getSession(config);
+      expect(sessionMiddleware).toBeTruthy();
+    } catch (e) {
+      throw e;
+    }
   });
 });
