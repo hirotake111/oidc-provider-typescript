@@ -8,6 +8,7 @@ import connectRedis from "connect-redis";
 
 import { ConfigType } from "../config";
 import helmet from "helmet";
+import { getSession } from "../utils/utils";
 
 const redisStore = connectRedis(session);
 
@@ -59,22 +60,7 @@ export const useMiddleware = (app: Express, config: ConfigType) => {
   // helmet
   app.use(helmet());
   // session
-  app.use(
-    session({
-      secret: config.SECRETKEY,
-      name: "authSessionId",
-      store: config.redisClient
-        ? new redisStore({ client: config.redisClient })
-        : undefined,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 1, // 1 minute(s)
-        sameSite: "lax",
-        secure: config.PROD ? true : false,
-      },
-    })
-  );
+  app.use(getSession(config));
   // cookie-parser
   app.use(cookieParser());
 };

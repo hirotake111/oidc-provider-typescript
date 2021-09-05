@@ -82,8 +82,6 @@ export const getSession = (config: ConfigType) => {
   const store = config.redisClient
     ? new RedisStoreConstructor({ client: config.redisClient })
     : undefined;
-  if (!store)
-    console.log("config.redisClient is undefined - use in-memory store");
   return session({
     secret: config.SECRETKEY,
     name: "authSessionId",
@@ -93,7 +91,7 @@ export const getSession = (config: ConfigType) => {
     cookie: {
       maxAge: 1000 * 60 * 1, // 1 minute(s)
       sameSite: "lax",
-      secure: config.PROD ? true : false,
+      secure: config.REDIS_CONNECTION_TLS,
     },
   });
 };

@@ -32,6 +32,7 @@ docker build -t auth_sample_client .
 - ISSUER - URL for OIDC server itself
 - REDIS_URL - URL for redis server
 - USER_CREATION_ALLOWED - set any value if you want to allow user to create an account
+- REDIS_CONNECTION_TLS - set any value if you want to connect to Redis server over TLS
 
 ### Run docker containers
 

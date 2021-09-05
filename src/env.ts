@@ -19,6 +19,8 @@ const env = {
   COOKIEPARAMS: JSON.parse(
     process.env.COOKIEPARAMS || '{"long":{},"short":{}}'
   ),
+  REDIS_CONNECTION_TLS: !!process.env.REDIS_CONNECTION_TLS,
+  POSTGRES_CONNECTION_TLS: !!process.env.POSTGRES_CONNECTION_TLS,
 };
 
 type Env = typeof env;
