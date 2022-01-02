@@ -1,47 +1,67 @@
-<div class="login-client-image">
-    <% if (client.logoUri) { %><img src="<%= client.logoUri %>"><% } %>
-  </div>
-  
-  <ul>
-  <% if ([details.scopes.accepted, details.scopes.rejected, details.claims.accepted, details.claims.rejected].every(({ length }) => length === 0)) { %>
-    <li>this is a new authorization</li>
-  <% } %>
-  
-  <% if ([details.scopes.new, details.claims.new].every(({ length }) => length === 0)) { %>
-    <li>the client is asking you to confirm previously given authorization</li>
-  <% } %>
-  
-  <% newScopes = new Set(details.scopes.new); newScopes.delete('openid'); newScopes.delete('offline_access') %>
-  <% if (newScopes.size) { %>
-    <li>scopes:</li>
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <link rel="stylesheet" href="/style.css">
+  <title>SIGN IN</title>
+</head>
+<body>
+<div class="container">
+  <div class="login-card">
     <ul>
-      <% newScopes.forEach((scope) => { %>
-        <li><%= scope %></li>
-      <% }) %>
-    </ul>
-  <% } %>
-  
-  <% newClaims = new Set(details.claims.new); ['sub', 'sid', 'auth_time', 'acr', 'amr', 'iss'].forEach(Set.prototype.delete.bind(newClaims)) %>
-  <% if (newClaims.size) { %>
-    <li>claims:</li>
-    <ul>
-      <% newClaims.forEach((claim) => { %>
-        <li><%= claim %></li>
-      <% }) %>
-    </ul>
-  <% } %>
-  
-  <% if (params.scope && params.scope.includes('offline_access')) { %>
-    <li>
-    the client is asking to have offline access to this authorization
-      <% if (!details.scopes.new.includes('offline_access')) { %>
-        (which you've previously granted)
+      <% if ([details.scopes.accepted, details.scopes.rejected,
+      details.claims.accepted, details.claims.rejected].every(({ length }) => length
+      === 0)) { %>
+        <p class="title">Looks like this is a new authorization!</p>
+      <% } %> 
+
+      <% if ([details.scopes.new, details.claims.new].every(({ length }) => length === 0)) { %>
+        <li>the client is asking you to confirm previously given authorization</li>
       <% } %>
-    </li>
-  <% } %>
-  </ul>
+      
+      <% newScopes = new Set(details.scopes.new);
+        newScopes.delete('openid'); newScopes.delete('offline_access') %> 
+      
+      <% if (newScopes.size) { %>
+        <p>scopes: [
+          <% newScopes.forEach((scope) => {%> 
+            <span><%= scope %></span>
+          <% }) %>]
+        </p>
+      <% } %> 
+      
+      <% 
+        newClaims = new Set(details.claims.new); 
+        ['sub', 'sid', 'auth_time', 'acr', 'amr', 'iss']
+        .forEach(Set.prototype.delete.bind(newClaims)) 
+      %> 
+      
+      <% if (newClaims.size) { %>
+        <li>claims:</li>
+        <ul>
+          <% newClaims.forEach((claim) => { %></%>
+          <li><%= claim %></li>
+          <% }) %>
+        </ul>
+        <% } %> 
+      
+      <% if (params.scope && params.scope.includes('offline_access')) { %>
+        <li>
+          the client is asking to have offline access to this authorization 
+          <% if (!details.scopes.new.includes('offline_access')) { %> 
+            (which you've previously granted) 
+          <% } %>
+        </li>
+      <% } %>
+    </ul>
   <form autocomplete="off" action="/interaction/<%= uid %>/confirm" method="post">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <button autofocus type="submit" class="login login-submit">Continue</button>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <div style="display: flex; justify-content: center;">
+      <button autofocus type="submit" class="button">Continue</button>
+      </div>
   </form>
-  
+</div>
+</div>
+</body>

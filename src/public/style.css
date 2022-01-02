@@ -11,6 +11,13 @@ body {
   color: #fff;
 }
 
+ul {
+  padding: 0;
+}
+li {
+  list-style-type: none;
+}
+
 input {
   font-family: Euclid, sans-serif, Arial, BlinkMacSystemFont, Segoe UI, Roboto,
     Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue;
@@ -106,6 +113,11 @@ input {
   color: #fff;
   background-color: rgb(3 93 157);
   width: 100%;
+  max-width: 250px;
+}
+
+.button:focus-visible {
+  outline: none;
 }
 
 .signup {
