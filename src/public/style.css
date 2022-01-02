@@ -120,6 +120,10 @@ input {
   outline: none;
 }
 
+.button_disabled {
+  cursor: not-allowed;
+}
+
 .signup {
   text-align: right;
 }

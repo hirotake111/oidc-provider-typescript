@@ -20,6 +20,7 @@
               <img class="username__icon"  src="/img/person.svg" alt="person"/>
             </div>
             <input 
+            id="username"
             class="username__input" 
             required type="text" name="username" placeholder="Username"
             <% if (!params.login_hint) { %>autofocus="on"<% } else { %> value="<%= params.login_hint %>" <% } %>
@@ -29,11 +30,11 @@
             <div style="position: absolute; cursor:pointer;">
               <img class="password__icon"  src="/img/password.svg" alt="person"/>
             </div>
-              <input class="password__input" required type="password" name="password" placeholder="Password" <% if (params.login_hint) { %>autofocus="on"<% } %>>
+              <input id="password" class="password__input" required type="password" name="password" placeholder="Password" <% if (params.login_hint) { %>autofocus="on"<% } %>>
           </div>
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-          <button type="submit" class="button">Sign In</button>
+          <button id="button" type="submit" class="button">Sign In</button>
         </form>
         <div class="login-help">
         <div class="signup">
@@ -41,5 +42,6 @@
         </div>
       </div>
     </div>
+    <script src="/scripts/login.js"></script>
   </body>
 </html>
