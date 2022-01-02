@@ -73,6 +73,12 @@ let server: Server;
   // Append routes
   useRoute(app, controller, config);
 
+  // some logging messages
+  console.log("USER_CREATION_ALLOWED:", config.USER_CREATION_ALLOWED);
+  console.log("Connection to Redis over TLS:", config.REDIS_CONNECTION_TLS);
+  if (!config.redisClient)
+    console.log("config.redisClient is undefined - use in-memory store");
+
   // start HTTP server
   server = app.listen(config.PORT, () => {
     console.log(`${config.ISSUER}/.well-known/openid-configuration`);

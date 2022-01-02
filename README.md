@@ -10,9 +10,7 @@ Open ID Connect server, a part of my portofolio app.
 
 ```bash
 # Image for development
-npm run builddev  # multi-archtechture
-# or
-docker build -t $IMAGE_NAME .
+npm run builddev
 
 # Image for production (multi platform)
 npm run buildprod
@@ -25,7 +23,8 @@ docker build -t auth_sample_client .
 ### Required environment variables
 
 - SECRETKEY - secret key for app
-- OIDCCONFIGURATION - OIDC server configuration
+- CLIENTMEDATADA - OIDC client metadata
+- COOKIEPARAMS - Cookie parameters for OIDC
 - JWKS - JSON Web key Set
 - DATABASE_URI - URI for Database
 - NODE_ENV - for production environment, set "production"
@@ -52,3 +51,7 @@ cd client
 npm start
 # then open http://localhost:3001
 ```
+
+### important things to know
+
+- You can add "</%>" somewhere in the .ejs file when using vscode. Otherwise the file will be auto formated badly.

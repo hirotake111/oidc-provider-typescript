@@ -1,0 +1,140 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,100);
+
+body {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  font-family: Euclid, sans-serif, Arial, BlinkMacSystemFont, Segoe UI, Roboto,
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue;
+  color: #fff;
+}
+
+ul {
+  padding: 0;
+}
+li {
+  list-style-type: none;
+}
+
+input {
+  font-family: Euclid, sans-serif, Arial, BlinkMacSystemFont, Segoe UI, Roboto,
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue;
+  color: #fff;
+  font-size: 16px;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: rgb(1, 93, 156);
+  background: linear-gradient(
+    321deg,
+    rgba(1, 93, 156, 1) 0%,
+    rgba(1, 198, 156, 1) 100%
+  );
+  overflow: hidden;
+}
+
+.login-card {
+  margin-bottom: 64px;
+  padding: 32px 96px;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.title {
+  font-size: 24px;
+}
+
+.username {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.username__icon {
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.username__input {
+  position: relative;
+  border: none;
+  padding: 16px 0 16px 32px;
+  border-radius: 5px;
+  background-color: transparent;
+  width: 100%;
+}
+
+.username__input:focus {
+  outline: 2px solid rgb(3 93 157);
+}
+
+.password {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.password__icon {
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.password__input {
+  position: relative;
+  border: none;
+  padding: 16px 0 16px 32px;
+  border-radius: 5px;
+  background-color: transparent;
+  width: 100%;
+  color: #fff;
+}
+
+.password__input:focus {
+  outline: 2px solid rgb(3 93 157);
+}
+
+.button {
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  color: #fff;
+  background-color: rgb(3 93 157);
+  width: 100%;
+  max-width: 250px;
+}
+
+.button:focus-visible {
+  outline: none;
+}
+
+.signup {
+  text-align: right;
+}
+
+@media screen and (max-width: 800px) {
+  .login-card {
+    margin-bottom: 0;
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .signup {
+    font-size: 14px;
+  }
+}

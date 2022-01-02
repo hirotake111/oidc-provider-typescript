@@ -12,7 +12,7 @@
     "serve": "node dist/index.js",
     "client": "node client/index.js",
     "genkeys": "ts-node src/support/generate-keys.ts",
-    "builddev": "docker build -t nodeapp-dev -f Dockerfile-dev .",
+    "builddev": "docker build -t oidc_server -f Dockerfile-dev .",
     "buildprod": "./build_production_image.sh"
   },
   "keywords": [],
