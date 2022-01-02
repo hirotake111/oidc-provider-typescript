@@ -48,6 +48,12 @@ let server: Server;
     console.log("Bootstrapping server as PRODUCTION");
   }
 
+  // some logging messages
+  console.log("USER_CREATION_ALLOWED:", config.USER_CREATION_ALLOWED);
+  console.log("Connection to Redis over TLS:", config.REDIS_CONNECTION_TLS);
+  if (!config.redisClient)
+    console.log("config.redisClient is undefined - use in-memory store");
+
   // get AuthService
   const AuthService = getAuthService(config, { User });
 
