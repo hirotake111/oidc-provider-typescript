@@ -33,9 +33,9 @@ input {
   height: 100vh;
   background: rgb(1, 93, 156);
   background: linear-gradient(
-    202deg,
+    321deg,
     rgba(1, 93, 156, 1) 0%,
-    rgba(1, 164, 198, 1) 55%
+    rgba(1, 198, 156, 1) 100%
   );
   overflow: hidden;
 }
