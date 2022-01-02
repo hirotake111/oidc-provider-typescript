@@ -59,9 +59,10 @@
   <form autocomplete="off" action="/interaction/<%= uid %>/confirm" method="post">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <div style="display: flex; justify-content: center;">
-      <button autofocus type="submit" class="button">Continue</button>
+      <button id="button" autofocus type="submit" class="button">Continue</button>
       </div>
   </form>
 </div>
 </div>
+<script src="/scripts/interaction.js"></script>
 </body>
